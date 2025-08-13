@@ -1,0 +1,309 @@
+org/debian bookworm/main amd64 vim-runtime all 2:9.0.1378-2+deb12u2 [7,027 kB]
+Get:3 http://deb.debian.org/debian bookworm/main amd64 vim amd64 2:9.0.1378-2+deb12u2 [1,568 kB]
+Fetched 8,756 kB in 2s (4,613 kB/s)
+Selecting previously unselected package libsodium23:amd64.
+(Reading database ... 77586 files and directories currently installed.)
+Preparing to unpack .../libsodium23_1.0.18-1_amd64.deb ...
+Unpacking libsodium23:amd64 (1.0.18-1) ...
+Selecting previously unselected package vim-runtime.
+Preparing to unpack .../vim-runtime_2%3a9.0.1378-2+deb12u2_all.deb ...
+Adding 'diversion of /usr/share/vim/vim90/doc/help.txt to /usr/share/vim/vim90/doc/help.txt.vim-tiny by vim-runtime'
+Adding 'diversion of /usr/share/vim/vim90/doc/tags to /usr/share/vim/vim90/doc/tags.vim-tiny by vim-runtime'
+Unpacking vim-runtime (2:9.0.1378-2+deb12u2) ...
+Selecting previously unselected package vim.
+Preparing to unpack .../vim_2%3a9.0.1378-2+deb12u2_amd64.deb ...
+Unpacking vim (2:9.0.1378-2+deb12u2) ...
+Setting up libsodium23:amd64 (1.0.18-1) ...
+Setting up vim-runtime (2:9.0.1378-2+deb12u2) ...
+Setting up vim (2:9.0.1378-2+deb12u2) ...
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/ex (ex) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rview (rview) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rvim (rvim) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vi (vi) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/view (view) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vim (vim) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vimdiff (vimdiff) in auto mode
+Processing triggers for man-db (2.11.2-2) ...
+Processing triggers for libc-bin (2.36-9+deb12u10) ...
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ node --check index.js
+/home/x0xt/greenbot-bot/index.js:678
+});
+ ^
+
+SyntaxError: Unexpected token ')'
+    at checkSyntax (node:internal/main/check_syntax:78:5)
+
+Node.js v18.19.0
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ nano ~/.vimrc
+x0xt@NUC:~/greenbot-bot$ vim
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ node --check index.js
+/home/x0xt/greenbot-bot/index.js:678
+});
+ ^
+
+SyntaxError: Unexpected token ')'
+    at checkSyntax (node:internal/main/check_syntax:78:5)
+
+Node.js v18.19.0
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ node --check index.js
+/home/x0xt/greenbot-bot/index.js:678
+});
+ ^
+
+SyntaxError: Unexpected token ')'
+    at checkSyntax (node:internal/main/check_syntax:78:5)
+
+Node.js v18.19.0
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ node --check index.js
+/home/x0xt/greenbot-bot/index.js:692
+
+
+
+SyntaxError: Unexpected end of input
+    at checkSyntax (node:internal/main/check_syntax:78:5)
+
+Node.js v18.19.0
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ node --check index.js
+/home/x0xt/greenbot-bot/index.js:678
+});
+ ^
+
+SyntaxError: Unexpected token ')'
+    at checkSyntax (node:internal/main/check_syntax:78:5)
+
+Node.js v18.19.0
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ node --check index.js
+/home/x0xt/greenbot-bot/index.js:678
+});
+ ^
+
+SyntaxError: Unexpected token ')'
+    at checkSyntax (node:internal/main/check_syntax:78:5)
+
+Node.js v18.19.0
+x0xt@NUC:~/greenbot-bot$ 54:    try {
+123:    try {
+...
+-bash: 54:: command not found
+-bash: 123:: command not found
+-bash: ...: command not found
+x0xt@NUC:~/greenbot-bot$ grep -n "try" index.js
+117:async function ensureDir(dir) { try { await fs.mkdir(dir, { recursive: true }); } catch {} }
+124:  try {
+126:    try { await fs.access(file); }
+138:  try {
+140:    try { await fs.access(file); } catch { return ''; }
+149:  try {
+151:    const entry = `${String(userMsg).replace(/\s+/g, ' ').slice(0, 400)}\n`;
+153:    try { existing = await fs.readFile(file, 'utf8'); } catch {}
+154:    const lines = (existing + entry).split('\n').filter(Boolean);
+163:  try {
+193:      try { await fs.unlink(file.path); console.log(`Pruned: ${file.name}`); }
+218:  try {
+256:  try {
+278:  try {
+282:    // First try a HEAD to get type & size without downloading
+284:    try {
+286:    } catch { /* some hosts block HEAD; we’ll try GET */ }
+364:  try {
+442:  try {
+477:      const entry = lastMsgBuffer.get(userId);
+479:      resolve(entry?.content ?? newContent);
+500:  try {
+528:      "my brain is melting from your stupid request. try again later, moron.",
+537:        "are you trying to DDoS my brain with your bullshit? knock it off.",
+573:                try {
+600:        try {
+602:          try { await fs.access(file); } catch { return msg.reply({ content: 'no notes.', allowedMentions: { parse: [], repliedUser: false } }); }
+610:        try { await fs.unlink(file); } catch {}
+625:    try {
+627:        try {
+640:          return 'model is cooling down — try again in a moment.';
+647:          return 'too many requests right now — try again shortly.';
+656:try {
+682:  try {
+x0xt@NUC:~/greenbot-bot$ vim index.js
+x0xt@NUC:~/greenbot-bot$ node --check index.js
+x0xt@NUC:~/greenbot-bot$ sudo systemctl restart greenbot
+[sudo] password for x0xt: 
+x0xt@NUC:~/greenbot-bot$ sudo systemctl status greenbot
+● greenbot.service - GreenBot V2 Discord bot
+     Loaded: loaded (/etc/systemd/system/greenbot.service; enabled; preset: enabled)
+     Active: active (running) since Wed 2025-08-13 02:12:50 EDT; 5s ago
+   Main PID: 212263 (node)
+      Tasks: 11 (limit: 18967)
+     Memory: 63.5M
+        CPU: 885ms
+     CGroup: /system.slice/greenbot.service
+             └─212263 /usr/bin/node index.js
+
+Aug 13 02:12:50 NUC systemd[1]: Started greenbot.service - GreenBot V2 Discord bot.
+Aug 13 02:12:51 NUC node[212263]: Logging in...
+Aug 13 02:12:51 NUC node[212263]: Ollama health: OK
+Aug 13 02:12:51 NUC node[212263]: Logged in as GreenBotV2#9643 (MODEL=greenbot, HOST=http://127.0.0.1:11434)
+x0xt@NUC:~/greenbot-bot$ sudo systemctl status greenbot
+● greenbot.service - GreenBot V2 Discord bot
+     Loaded: loaded (/etc/systemd/system/greenbot.service; enabled; preset: enabled)
+     Active: active (running) since Wed 2025-08-13 02:12:50 EDT; 53s ago
+   Main PID: 212263 (node)
+      Tasks: 11 (limit: 18967)
+     Memory: 49.5M
+        CPU: 1.086s
+     CGroup: /system.slice/greenbot.service
+             └─212263 /usr/bin/node index.js
+
+Aug 13 02:12:50 NUC systemd[1]: Started greenbot.service - GreenBot V2 Discord bot.
+Aug 13 02:12:51 NUC node[212263]: Logging in...
+Aug 13 02:12:51 NUC node[212263]: Ollama health: OK
+Aug 13 02:12:51 NUC node[212263]: Logged in as GreenBotV2#9643 (MODEL=greenbot, HOST=http://127.0.0.1:11434)
+x0xt@NUC:~/greenbot-bot$ htop
+x0xt@NUC:~/greenbot-bot$ sudo systemctl status ollama
+● ollama.service - Ollama Service
+     Loaded: loaded (/etc/systemd/system/ollama.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2025-08-12 22:41:58 EDT; 3h 33min ago
+   Main PID: 174308 (ollama)
+      Tasks: 30 (limit: 18967)
+     Memory: 5.1G
+        CPU: 2h 52min 1.261s
+     CGroup: /system.slice/ollama.service
+             ├─174308 /usr/local/bin/ollama serve
+             └─212278 /usr/local/bin/ollama runner --model /usr/share/ollama/.ollama/models/blobs/sha256-11a57a9bd0bc7d5e12aa0cc3d83e8d34b776fe5a8c232b20d610ca9f4e8b4b23 --ctx-size 4096 --batch-size 512 --threads 4 --no-mmap --parallel 1 --port 39461
+
+Aug 13 02:13:15 NUC ollama[174308]: llama_context: graph splits = 1
+Aug 13 02:13:15 NUC ollama[174308]: time=2025-08-13T02:13:15.244-04:00 level=INFO source=server.go:637 msg="llama runner started in 1.26 seconds"
+Aug 13 02:13:45 NUC ollama[174308]: [GIN] 2025/08/13 - 02:13:45 | 200 | 31.705913429s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:03 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:03 | 200 |  17.45006347s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:08 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:08 | 200 |  5.238590876s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:20 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:20 | 200 |  12.57692828s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:32 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:32 | 200 | 11.825603417s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:50 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:50 | 200 |  17.34974394s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:15:25 NUC ollama[174308]: [GIN] 2025/08/13 - 02:15:25 | 200 | 35.308617277s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:15:45 NUC ollama[174308]: [GIN] 2025/08/13 - 02:15:45 | 200 | 20.502739966s |       127.0.0.1 | POST     "/api/chat"
+x0xt@NUC:~/greenbot-bot$ sudo systemctl status ollama
+● ollama.service - Ollama Service
+     Loaded: loaded (/etc/systemd/system/ollama.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2025-08-12 22:41:58 EDT; 3h 33min ago
+   Main PID: 174308 (ollama)
+      Tasks: 30 (limit: 18967)
+     Memory: 5.1G
+        CPU: 2h 52min 9.822s
+     CGroup: /system.slice/ollama.service
+             ├─174308 /usr/local/bin/ollama serve
+             └─212278 /usr/local/bin/ollama runner --model /usr/share/ollama/.ollama/models/blobs/sha256-11a57a9bd0bc7d5e12aa0cc3d83e8d34b776fe5a8c232b20d610ca9f4e8b4b23 --ctx-size 4096 --batch-size 512 --threads 4 --no-mmap --parallel 1 --port 39461
+
+Aug 13 02:13:15 NUC ollama[174308]: llama_context: graph splits = 1
+Aug 13 02:13:15 NUC ollama[174308]: time=2025-08-13T02:13:15.244-04:00 level=INFO source=server.go:637 msg="llama runner started in 1.26 seconds"
+Aug 13 02:13:45 NUC ollama[174308]: [GIN] 2025/08/13 - 02:13:45 | 200 | 31.705913429s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:03 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:03 | 200 |  17.45006347s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:08 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:08 | 200 |  5.238590876s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:20 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:20 | 200 |  12.57692828s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:32 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:32 | 200 | 11.825603417s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:50 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:50 | 200 |  17.34974394s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:15:25 NUC ollama[174308]: [GIN] 2025/08/13 - 02:15:25 | 200 | 35.308617277s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:15:45 NUC ollama[174308]: [GIN] 2025/08/13 - 02:15:45 | 200 | 20.502739966s |       127.0.0.1 | POST     "/api/chat"
+x0xt@NUC:~/greenbot-bot$ sudo systemctl status ollama
+● ollama.service - Ollama Service
+     Loaded: loaded (/etc/systemd/system/ollama.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2025-08-12 22:41:58 EDT; 3h 34min ago
+   Main PID: 174308 (ollama)
+      Tasks: 30 (limit: 18967)
+     Memory: 5.1G
+        CPU: 2h 52min 11.174s
+     CGroup: /system.slice/ollama.service
+             ├─174308 /usr/local/bin/ollama serve
+             └─212278 /usr/local/bin/ollama runner --model /usr/share/ollama/.ollama/models/blobs/sha256-11a57a9bd0bc7d5e12aa0cc3d83e8d34b776fe5a8c232b20d610ca9f4e8b4b23 --ctx-size 4096 --batch-size 512 --threads 4 --no-mmap --parallel 1 --port 39461
+
+Aug 13 02:13:15 NUC ollama[174308]: llama_context: graph splits = 1
+Aug 13 02:13:15 NUC ollama[174308]: time=2025-08-13T02:13:15.244-04:00 level=INFO source=server.go:637 msg="llama runner started in 1.26 seconds"
+Aug 13 02:13:45 NUC ollama[174308]: [GIN] 2025/08/13 - 02:13:45 | 200 | 31.705913429s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:03 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:03 | 200 |  17.45006347s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:08 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:08 | 200 |  5.238590876s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:20 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:20 | 200 |  12.57692828s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:32 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:32 | 200 | 11.825603417s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:14:50 NUC ollama[174308]: [GIN] 2025/08/13 - 02:14:50 | 200 |  17.34974394s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:15:25 NUC ollama[174308]: [GIN] 2025/08/13 - 02:15:25 | 200 | 35.308617277s |       127.0.0.1 | POST     "/api/chat"
+Aug 13 02:15:45 NUC ollama[174308]: [GIN] 2025/08/13 - 02:15:45 | 200 | 20.502739966s |       127.0.0.1 | POST     "/api/chat"
+x0xt@NUC:~/greenbot-bot$ sudo apt update
+Hit:1 http://deb.debian.org/debian bookworm InRelease
+Hit:2 http://security.debian.org/debian-security bookworm-security InRelease
+Get:3 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]    
+Get:4 https://pkgs.tailscale.com/stable/debian bookworm InRelease                     
+Fetched 62.0 kB in 0s (134 kB/s)
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+5 packages can be upgraded. Run 'apt list --upgradable' to see them.
+x0xt@NUC:~/greenbot-bot$ sudo apt upgrade
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+Calculating upgrade... Done
+The following NEW packages will be installed:
+  linux-image-6.1.0-38-amd64
+The following packages will be upgraded:
+  libssl-dev libssl3 linux-image-amd64 linux-libc-dev openssl
+5 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 77.2 MB of archives.
+After this operation, 409 MB of additional disk space will be used.
+Do you want to continue? [Y/n] 
+Get:1 http://deb.debian.org/debian bookworm-updates/main amd64 libssl-dev amd64 3.0.17-1~deb12u2 [2,441 kB]
+Get:2 http://security.debian.org/debian-security bookworm-security/main amd64 linux-image-6.1.0-38-amd64 amd64 6.1.147-1 [69.1 MB]
+Get:3 http://deb.debian.org/debian bookworm-updates/main amd64 libssl3 amd64 3.0.17-1~deb12u2 [2,027 kB]
+Get:4 http://deb.debian.org/debian bookworm-updates/main amd64 openssl amd64 3.0.17-1~deb12u2 [1,430 kB]
+Get:5 http://security.debian.org/debian-security bookworm-security/main amd64 linux-image-amd64 amd64 6.1.147-1 [1,480 B]
+Get:6 http://security.debian.org/debian-security bookworm-security/main amd64 linux-libc-dev amd64 6.1.147-1 [2,171 kB]
+Fetched 77.2 MB in 6s (13.7 MB/s)     
+Reading changelogs... Done
+(Reading database ... 79664 files and directories currently installed.)
+Preparing to unpack .../0-libssl-dev_3.0.17-1~deb12u2_amd64.deb ...
+Unpacking libssl-dev:amd64 (3.0.17-1~deb12u2) over (3.0.17-1~deb12u1) ...
+Preparing to unpack .../1-libssl3_3.0.17-1~deb12u2_amd64.deb ...
+Unpacking libssl3:amd64 (3.0.17-1~deb12u2) over (3.0.17-1~deb12u1) ...
+Selecting previously unselected package linux-image-6.1.0-38-amd64.
+Preparing to unpack .../2-linux-image-6.1.0-38-amd64_6.1.147-1_amd64.deb ...
+Unpacking linux-image-6.1.0-38-amd64 (6.1.147-1) ...
+Preparing to unpack .../3-linux-image-amd64_6.1.147-1_amd64.deb ...
+Unpacking linux-image-amd64 (6.1.147-1) over (6.1.140-1) ...
+Preparing to unpack .../4-linux-libc-dev_6.1.147-1_amd64.deb ...
+Unpacking linux-libc-dev:amd64 (6.1.147-1) over (6.1.140-1) ...
+Preparing to unpack .../5-openssl_3.0.17-1~deb12u2_amd64.deb ...
+Unpacking openssl (3.0.17-1~deb12u2) over (3.0.17-1~deb12u1) ...
+Setting up libssl3:amd64 (3.0.17-1~deb12u2) ...
+Setting up linux-libc-dev:amd64 (6.1.147-1) ...
+Setting up linux-image-6.1.0-38-amd64 (6.1.147-1) ...
+I: /vmlinuz.old is now a symlink to boot/vmlinuz-6.1.0-37-amd64
+I: /initrd.img.old is now a symlink to boot/initrd.img-6.1.0-37-amd64
+I: /vmlinuz is now a symlink to boot/vmlinuz-6.1.0-38-amd64
+I: /initrd.img is now a symlink to boot/initrd.img-6.1.0-38-amd64
+/etc/kernel/postinst.d/initramfs-tools:
+update-initramfs: Generating /boot/initrd.img-6.1.0-38-amd64
+/etc/kernel/postinst.d/zz-update-grub:
+Generating grub configuration file ...
+Found linux image: /boot/vmlinuz-6.1.0-38-amd64
+Found initrd image: /boot/initrd.img-6.1.0-38-amd64
+Found linux image: /boot/vmlinuz-6.1.0-37-amd64
+Found initrd image: /boot/initrd.img-6.1.0-37-amd64
+Found linux image: /boot/vmlinuz-6.1.0-35-amd64
+Found initrd image: /boot/initrd.img-6.1.0-35-amd64
+Warning: os-prober will not be executed to detect other bootable partitions.
+Systems on them will not be added to the GRUB boot configuration.
+Check GRUB_DISABLE_OS_PROBER documentation entry.
+Adding boot menu entry for UEFI Firmware Settings ...
+done
+Setting up libssl-dev:amd64 (3.0.17-1~deb12u2) ...
+Setting up openssl (3.0.17-1~deb12u2) ...
+Setting up linux-image-amd64 (6.1.147-1) ...
+Processing triggers for libc-bin (2.36-9+deb12u10) ...
+Processing triggers for man-db (2.11.2-2) ...
+x0xt@NUC:~/greenbot-bot$ 

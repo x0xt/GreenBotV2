@@ -1,0 +1,52 @@
+import 'dotenv/config';
+import { Client, GatewayIntentBits, Partials } from 'discord.js';
+
+const {
+  DISCORD_TOKEN,
+  OLLAMA_HOST = 'http://127.0.0.1:11434',
+  MODEL = 'greenbot'
+} = process.env;
+
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+  partials: [Partials.Channel]
+});
+
+client.once('ready', () => console.log(`Logged in as ${client.user.tag}`));
+
+async function ollamaChat(text) {
+  const res = await fetch(`${OLLAMA_HOST}/api/chat`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: 'user', content: text }],
+      stream: false
+    })
+  });
+  if (!res.ok) throw new Error(`ollama ${res.status} ${res.statusText}`);
+
+  const data = await res.json();
+  const out = data?.message?.content ?? '';
+  return (out || '…').slice(0, 1900).trim();
+}
+
+function shouldReply(msg) {
+  return msg.mentions.has(client.user) || msg.content.trim().startsWith('!gb ');
+}
+
+client.on('messageCreate', async (msg) => {
+  if (msg.author.bot || !shouldReply(msg)) return;
+  const prompt = msg.content.replace(/<@!?\d+>/g, '').replace(/^!gb\s*/i, '').trim();
+  if (!prompt) return;
+  try {
+    await msg.channel.sendTyping();
+    const reply = await ollamaChat(prompt);
+    await msg.reply(reply);
+  } catch (err) {
+    console.error(err);
+    await msg.reply('ollama fell over. try again.');
+  }
+});
+
+client.login(DISCORD_TOKEN);
