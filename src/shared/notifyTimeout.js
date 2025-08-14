@@ -1,36 +1,46 @@
 // src/shared/notifyTimeout.js
-import { AttachmentBuilder } from 'discord.js';
+import fs from 'fs';
 import path from 'path';
+import { AttachmentBuilder, PermissionFlagsBits } from 'discord.js';
 import { TIMEOUT_ERROR_GIF } from './constants.js';
-import { sendGif } from './sendGif.js';
-
-// derive a sane filename even if not exported explicitly
-const DEFAULT_NAME = path.basename(TIMEOUT_ERROR_GIF || 'lobotomy.gif');
 
 /**
- * Send the lobotomy GIF on timeout/breaker/test events.
- * Works with either a TextBasedChannel or a Repliable interaction.
- * @param {import('discord.js').TextBasedChannel|import('discord.js').RepliableInteraction} target
- * @param {string|null} message Optional description text
+ * Send the lobotomy GIF as a raw attachment (reliable animation) to either:
+ * - a RepliableInteraction (slash), or
+ * - a TextBasedChannel
+ * Falls back to text if file missing or AttachFiles is denied.
  */
-export async function notifyTimeout(target, message = null) {
-  const description = message ?? '⏳ timed out — initiating emergency lobotomy...';
+export async function notifyTimeout(target, fallbackText = '⏳ Timeout / error — initiating lobotomy…') {
+  try {
+    const abs = path.resolve(TIMEOUT_ERROR_GIF);
+    if (!fs.existsSync(abs)) {
+      console.error(`[notifyTimeout] GIF missing at ${abs}`);
+      // best-effort fallback
+      if (typeof target?.isRepliable === 'function' && target.isRepliable()) {
+        return target.reply({ content: fallbackText });
+      }
+      return target.send?.(fallbackText);
+    }
 
-  // Slash command / interaction path — files must be attached in same payload
-  if (typeof target?.isRepliable === 'function' && target.isRepliable()) {
-    const file = new AttachmentBuilder(TIMEOUT_ERROR_GIF, { name: DEFAULT_NAME });
-    const payload = {
-      embeds: [{ image: { url: `attachment://${DEFAULT_NAME}` }, description }],
-      files: [file],
-      ephemeral: false,
-    };
-    if (target.deferred || target.replied) return target.followUp(payload);
-    return target.reply(payload);
+    const name = path.basename(abs) || 'lobotomy.gif';
+    const file = new AttachmentBuilder(abs, { name });
+
+    // Slash interaction path (attach in same payload)
+    if (typeof target?.isRepliable === 'function' && target.isRepliable()) {
+      if (target.appPermissions && !target.appPermissions.has(PermissionFlagsBits.AttachFiles)) {
+        return target.reply({ content: '❌ I lack **Attach Files** permission in this channel.', flags: 64 });
+      }
+      return target.reply({ files: [file] });
+    }
+
+    // Channel path (raw attachment)
+    return target.send?.({ files: [file] });
+  } catch (err) {
+    console.error('[notifyTimeout] failed:', err);
+    // final fallback
+    if (typeof target?.isRepliable === 'function' && target.isRepliable()) {
+      return target.reply?.({ content: fallbackText });
+    }
+    return target.send?.(fallbackText);
   }
-
-  // Channel path
-  return sendGif(target, TIMEOUT_ERROR_GIF, {
-    filename: DEFAULT_NAME,
-    description,
-  });
 }
