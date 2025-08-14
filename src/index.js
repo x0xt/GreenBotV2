@@ -3,6 +3,7 @@ import { Client, GatewayIntentBits, Partials, Collection } from 'discord.js';
 import { readdirSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import testLobo from "./features/dev/testLobotomy.js";
 
 // --- Environment Setup ---
 const { DISCORD_TOKEN } = process.env;
@@ -68,6 +69,7 @@ for (const file of eventFiles) {
 async function main() {
   try {
     console.log('Logging in...');
+client.on("messageCreate", (...args) => testLobo.run(...args));
     await client.login(DISCORD_TOKEN);
 
     // Once login is successful, start the keep-alive timer.
