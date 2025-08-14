@@ -1,3 +1,4 @@
+// file: src/events/messageCreate.js
 import { Events, ChannelType } from 'discord.js';
 import { touchUserMemory } from '../features/user/userMemory.js';
 import { handleAiChat } from '../features/ai/aiHandler.js';
@@ -13,51 +14,41 @@ export const once = false;
 
 export async function execute(msg) {
   try {
-    if (msg.author.bot) return;
+    if (msg.author?.bot) return;
 
-    // Concurrently try to collect images and touch user memory
+    // Run side-effects (non-command): image collection + light user memory touch
     await Promise.all([
-        collectImage(msg),
-        touchUserMemory(msg.guild?.id, msg.author.id, msg.author.username)
+      collectImage(msg),
+      touchUserMemory(msg.guild?.id, msg.author.id, msg.author.username),
     ]);
 
-    const rawContent = (msg.content || '').trim();
-    const prefix = '!gb ';
-    
+    const raw = (msg.content ?? '').trim();
     const inDM = msg.channel?.type === ChannelType.DM;
-    const mentioned = msg.mentions.users?.has?.(msg.client.user.id);
-    const isCommand = rawContent.toLowerCase().startsWith(prefix);
-    
-    // --- Command Handling ---
-    if (isCommand) {
-      const args = rawContent.slice(prefix.length).trim().split(/ +/);
-      const commandName = args.shift().toLowerCase();
-      
-      // Route to the appropriate command file
-      const command = msg.client.commands.get(commandName);
-      if (command) {
-        try {
-          await command.execute(msg, args);
-        } catch (error) {
-          console.error(`Error executing command ${commandName}:`, error);
-          await msg.reply({ content: 'that command broke, you probably fucked it up.', allowedMentions: { parse: [], repliedUser: false } });
-        }
-        return; // Stop further processing if it was a command
-      }
+    const mentioned = Boolean(msg.mentions?.users?.has?.(msg.client?.user?.id) ? msg.mentions.users.has(msg.client.user.id) : false);
+
+    // ---- PURE SLASH MODE ----
+    // If users try old prefix commands, gently point them to slash and bail.
+    // Match "!gb ..." specifically AND any other "!"-prefix attempts.
+    if (raw.startsWith('!gb') || /^!\w+/.test(raw)) {
+      await msg.reply({
+        content: 'I’m slash-only now you fucktard. Try **`/health`**, **`/suggest`**, etc.',
+        allowedMentions: { parse: [], repliedUser: false },
+      });
+      return; // do not dispatch any message-based command
     }
-    
-    // --- AI Chat Handling ---
+
+    // --- AI chat (targeted or probabilistic interjection) ---
     const targeted = inDM || mentioned;
     let interjecting = false;
+
     if (!targeted && INTERJECT_ENABLED && msg.guild && canInterject(msg.channel.id) && Math.random() < INTERJECT_PROB) {
       interjecting = true;
       markInterject(msg.channel.id);
     }
-    
-    if (targeted || interjecting) {
-        await handleAiChat(msg, interjecting);
-    }
 
+    if (targeted || interjecting) {
+      await handleAiChat(msg, interjecting);
+    }
   } catch (outer) {
     console.error('HANDLER ERR:', outer);
   }

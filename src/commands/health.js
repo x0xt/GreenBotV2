@@ -1,20 +1,24 @@
+import { SlashCommandBuilder } from 'discord.js';
 import { buckets, globalInFlight, globalQueue, breakerOpen, breakerTrippedUntil } from '../features/ai/backpressure.js';
 
-export const data = {
-  name: 'health',
-  description: 'Displays the current health and queue status of the bot.',
-};
+export const data = new SlashCommandBuilder()
+	.setName('health')
+	.setDescription('Displays the current health and queue status of the bot.');
 
-export async function execute(msg, args) {
-  return msg.reply({
-    content: "```json\n" + JSON.stringify({
-      globalInFlight,
-      globalQueue: globalQueue.length,
-      breakerOpen: breakerOpen(),
-      breakerTrippedUntil: breakerTrippedUntil > 0 ? new Date(breakerTrippedUntil).toISOString() : 'N/A',
-      perUserInFlight: (buckets.get(msg.author.id)?.inFlight ?? 0),
-      perUserQueue: (buckets.get(msg.author.id)?.queue.length ?? 0)
-    }, null, 2) + "\n```",
-    allowedMentions: { parse: [], repliedUser: false }
+export async function execute(interaction) {
+  const authorId = interaction.user.id;
+
+  const healthData = {
+    globalInFlight,
+    globalQueue: globalQueue.length,
+    breakerOpen: breakerOpen(),
+    breakerTrippedUntil: breakerTrippedUntil > 0 ? new Date(breakerTrippedUntil).toISOString() : 'N/A',
+    perUserInFlight: (buckets.get(authorId)?.inFlight ?? 0),
+    perUserQueue: (buckets.get(authorId)?.queue.length ?? 0)
+  };
+
+  await interaction.reply({
+    content: "```json\n" + JSON.stringify(healthData, null, 2) + "\n```",
+    ephemeral: true // Ephemeral means only you can see this reply
   });
 }

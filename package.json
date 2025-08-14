@@ -1,11 +1,12 @@
 {
   "name": "greenbot-v2",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "A chaotic Discord bot.",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "deploy": "node deploy-commands.js"
   },
   "dependencies": {
     "discord.js": "^14.15.2",
