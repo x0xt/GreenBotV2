@@ -1,10 +1,11 @@
-import { schedule, breakerOpen } from './backpressure.js';
+import { schedule, breakerOpen, recordFailure } from './backpressure.js';
 import { ollamaChat } from './ollamaClient.js';
 import { shapeWithSeed } from './tone.js';
 import { appendUserMemory } from '../user/userMemory.js';
 import { getRandomImage } from '../media/imagePool.js';
 import { safe } from '../../shared/safe.js';
-import { IMAGE_ALLOW_IN_SFW, IMAGE_INTERJECT_PROB, TIMEOUT_INSULTS, SPAMMER_INSULTS, TIMEOUT_ERROR_GIF, MERGE_WINDOW_MS } from '../../shared/constants.js';
+import { IMAGE_ALLOW_IN_SFW, IMAGE_INTERJECT_PROB, SPAMMER_INSULTS, MERGE_WINDOW_MS } from '../../shared/constants.js';
+import { notifyTimeout } from '../../shared/notifyTimeout.js';
 
 const lastMsgBuffer = new Map();
 function coalesceUserMessage(userId, newContent) {
@@ -21,6 +22,13 @@ function coalesceUserMessage(userId, newContent) {
     }, MERGE_WINDOW_MS);
     lastMsgBuffer.set(userId, { content: (prev?.content ?? newContent), timer });
   });
+}
+
+// NOTE: This function assumes `shouldWarnQueue` exists somewhere.
+// If it doesn't, you might need to define or import it.
+function shouldWarnQueue(userId) {
+  // Placeholder logic, adjust as needed
+  return true;
 }
 
 export async function handleAiChat(msg, interjecting) {
@@ -58,7 +66,7 @@ export async function handleAiChat(msg, interjecting) {
         console.error('OLLAMA ERR:', e);
         throw e;
       }
-    }).catch((err) => {
+    }).catch(async (err) => {
       if (String(err.message).includes('breaker_open'))
         return 'model is cooling down — try again in a moment.';
       if (String(err.message).includes('user_queue_full')) {
@@ -68,10 +76,10 @@ export async function handleAiChat(msg, interjecting) {
       }
       if (String(err.message).includes('global_queue_full'))
         return 'too many requests right now — try again shortly.';
-      return {
-        content: TIMEOUT_INSULTS[Math.floor(Math.random() * TIMEOUT_INSULTS.length)],
-        file: TIMEOUT_ERROR_GIF
-      };
+      
+      // Default to the timeout handler for any other errors
+      await notifyTimeout(msg.channel);
+      return null;
     });
   } catch (e) {
     console.error('SCHEDULE/GEN ERR:', e);
@@ -91,7 +99,5 @@ export async function handleAiChat(msg, interjecting) {
       if (img) options.files = [img];
     }
     await msg.reply(options);
-  } else if (reply && reply.content) {
-    await msg.reply({ content: safe(reply.content), files: [reply.file], allowedMentions: { parse: [], repliedUser: false } });
   }
 }

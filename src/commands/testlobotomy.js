@@ -1,22 +1,34 @@
 // src/commands/testlobotomy.js
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { notifyTimeout } from '../shared/notifyTimeout.js';
-import { OWNER_ID } from '../shared/constants.js';
+import fs from 'fs';
+import path from 'path';
+import { SlashCommandBuilder, AttachmentBuilder, PermissionFlagsBits } from 'discord.js';
+import { OWNER_ID, TIMEOUT_ERROR_GIF } from '../shared/constants.js';
 
-// Hide from DMs and disable by default for everyone (we gate by OWNER_ID anyway)
 export const data = new SlashCommandBuilder()
   .setName('testlobotomy')
-  .setDescription('Send the lobotomy.gif to verify it animates (dev/test)')
+  .setDescription('Send lobotomy.gif to verify it animates (owner only)')
   .setDMPermission(false)
-  // Setting to 0 disables it by default for everyone in guild menus
-  .setDefaultMemberPermissions(0n);
+  .setDefaultMemberPermissions(0n); // hidden/disabled by default in menus
 
 export async function execute(interaction) {
+  // owner gate
   if (interaction.user.id !== OWNER_ID) {
-    return interaction.reply({
-      content: "🚫 You are not my owner fuck face. go back tO blowing your brother",
-      ephemeral: true,
-    });
+    return interaction.reply({ content: "🚫 You don't have permission you fucking idiot. Blame Doc.", flags: 64 }); // ephemeral
   }
-  await notifyTimeout(interaction, '🪓 test fire — this should animate.');
+
+  // channel permission check (AttachFiles is required)
+  if (interaction.appPermissions && !interaction.appPermissions.has(PermissionFlagsBits.AttachFiles)) {
+    return interaction.reply({ content: "❌ I lack **Attach Files** permission in this channel.", flags: 64 });
+  }
+
+  const abs = path.resolve(TIMEOUT_ERROR_GIF);
+  if (!fs.existsSync(abs)) {
+    return interaction.reply({ content: `❌ GIF not found: \`${abs}\``, flags: 64 });
+  }
+
+  const name = path.basename(abs) || 'lobotomy.gif';
+  const file = new AttachmentBuilder(abs, { name });
+
+  // simplest, most reliable: send the file only — Discord will animate it inline
+  return interaction.reply({ files: [file] });
 }

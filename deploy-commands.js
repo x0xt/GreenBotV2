@@ -101,27 +101,34 @@ async function loadCommands() {
     if (clearGuild)  await clearGuildCommands();
     if (clearGlobal) await clearGlobalCommands();
 
-    if (clearGuild || clearGlobal) return; // only clearing this run
+    if (clearGuild || clearGlobal) {
+      process.exit(0);
+    }
 
     const commands = await loadCommands();
 
     if (wantGuildOnly) {
       await deployGuild(commands);
-      return;
+      process.exit(0);
     }
     if (wantGlobalOnly) {
       await deployGlobal(commands);
-      return;
+      process.exit(0);
     }
 
-    // Default behavior: if guild id exists, deploy to guild; else deploy globally
+    // Default behavior: if guild id exists, deploy to guild; else global
     if (DISCORD_GUILD_ID) {
       await deployGuild(commands);
     } else {
       await deployGlobal(commands);
     }
+
+    // ✅ ensure ExecStartPre ends
+    process.exit(0);
+
   } catch (err) {
     console.error('Deploy failed:', err?.message || err);
     process.exit(1);
   }
 })();
+
