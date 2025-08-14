@@ -1,16 +1,14 @@
 {
+  "name": "greenbot-v2",
   "version": "1.0.0",
+  "description": "A chaotic Discord bot.",
+  "main": "src/index.js",
   "type": "module",
-  "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "discord.js": "^14.21.0",
-    "dotenv": "^17.2.1"
+    "discord.js": "^14.15.2",
+    "dotenv": "^16.4.5"
   }
 }
