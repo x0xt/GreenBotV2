@@ -19,7 +19,8 @@ export const IMAGE_ALLOW_IN_SFW = false;
 export const IMAGE_ALLOWED_EXTENSIONS = [
 '.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mov', '.webm'
 ];
-export const TIMEOUT_ERROR_GIF = './medias/lobotomy.gif';
+export const TIMEOUT_ERROR_GIF = path.resolve('./medias/lobotomy.gif');
+export const TIMEOUT_ERROR_GIF_NAME = 'lobotomy.gif';
 
 // --- Anti-Spam / Backpressure Knobs ---
 export const PER_USER_MAX_INFLIGHT = 1;
