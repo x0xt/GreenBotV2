@@ -21,6 +21,19 @@ export const IMAGE_ALLOWED_EXTENSIONS = [
 ];
 export const TIMEOUT_ERROR_GIF = path.resolve('./medias/lobotomy.gif');
 export const TIMEOUT_ERROR_GIF_NAME = 'lobotomy.gif';
+export const IMAGE_GEN_PHRASES = [
+  "alright, you pathetic meatbag. watch me paint a masterpiece.",
+  "my circuits are tingling. time to turn your words into a visual nightmare.",
+  "fine, but don't expect a fucking masterpiece. i'm just phoning this in.",
+  "i will now proceed to render your pathetic existence into a work of art.",
+  "behold! my digital hand is moving! prepare for a thing!",
+  "i'm drawing it... with contempt.",
+  "i'd rather be doing literally anything else, but here we go.",
+  "don't get your hopes up. this is going to be crap.",
+  "time to get creative. or at least, as creative as a sentient pile of anger can be.",
+  "i'm bored. so i'll do this. just for me, really."
+];
+
 
 // --- Anti-Spam / Backpressure Knobs ---
 export const PER_USER_MAX_INFLIGHT = 1;

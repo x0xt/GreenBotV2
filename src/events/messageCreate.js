@@ -16,37 +16,37 @@ export async function execute(msg) {
   try {
     if (msg.author?.bot) return;
 
-    // Run side-effects (non-command): image collection + light user memory touch
-    await Promise.all([
+    // --- non-blocking side-effects (do not stall chat if these hang/fail) ---
+    Promise.allSettled([
       collectImage(msg),
       touchUserMemory(msg.guild?.id, msg.author.id, msg.author.username),
     ]);
 
     const raw = (msg.content ?? '').trim();
     const inDM = msg.channel?.type === ChannelType.DM;
-    const mentioned = Boolean(msg.mentions?.users?.has?.(msg.client?.user?.id) ? msg.mentions.users.has(msg.client.user.id) : false);
+    const mentioned = msg.mentions?.has?.(msg.client.user) ?? false;
 
-    // ---- PURE SLASH MODE ----
-    // If users try old prefix commands, gently point them to slash and bail.
-    // Match "!gb ..." specifically AND any other "!"-prefix attempts.
+    // Legacy prefix nudge
     if (raw.startsWith('!gb') || /^!\w+/.test(raw)) {
       await msg.reply({
-        content: 'I’m slash-only now you fucktard. Try **`/health`**, **`/suggest`**, etc.',
+        content: 'Use slash commands now → try **`/health`**, **`/suggest`**, etc.',
         allowedMentions: { parse: [], repliedUser: false },
       });
-      return; // do not dispatch any message-based command
+      return;
     }
 
-    // --- AI chat (targeted or probabilistic interjection) ---
+    // Primary chat triggers: DM or mention
     const targeted = inDM || mentioned;
-    let interjecting = false;
 
+    // Optional ambient interjection
+    let interjecting = false;
     if (!targeted && INTERJECT_ENABLED && msg.guild && canInterject(msg.channel.id) && Math.random() < INTERJECT_PROB) {
       interjecting = true;
       markInterject(msg.channel.id);
     }
 
     if (targeted || interjecting) {
+      // handleAiChat already does scheduling, timeouts, and final reply assembly
       await handleAiChat(msg, interjecting);
     }
   } catch (outer) {
