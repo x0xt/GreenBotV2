@@ -1,3 +1,4 @@
+// file: src/index.js
 import 'dotenv/config';
 import { Client, GatewayIntentBits, Partials, Collection } from 'discord.js';
 import { readdirSync } from 'fs';
@@ -29,9 +30,14 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.DirectMessages,
+    GatewayIntentBits.GuildMessageReactions, // ← needed for ✅ reacts
+    GatewayIntentBits.DirectMessages,        // DM slash replies + DMs
   ],
-  partials: [Partials.Channel],
+  partials: [
+    Partials.Message,  // ← needed to fetch uncached messages
+    Partials.Channel,  // ← needed for DMs
+    Partials.Reaction, // ← needed to receive reaction events
+  ],
 });
 
 // --- Command Handling ---
@@ -70,9 +76,8 @@ async function main() {
     console.log('Logging in...');
     await client.login(DISCORD_TOKEN);
 
-    // Once login is successful, start the keep-alive timer.
+    // keep-alive
     setInterval(() => {}, 1 << 30);
-
   } catch (error) {
     console.error('FATAL: Failed to log in. Is your DISCORD_TOKEN correct?', error);
     process.exit(1);
