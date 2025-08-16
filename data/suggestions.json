@@ -26,5 +26,82 @@
     "link": "https://discord.com/channels/842995720251506688/1405325712550006925/1405785403662799008",
     "createdAt": 1755235758805,
     "notifiedAt": 1755235761888
+  },
+  {
+    "messageId": "1405795046636388412",
+    "userId": "1180570092132642936",
+    "username": "whoq",
+    "guildId": "842995720251506688",
+    "channelId": "1405325712550006925",
+    "text": "put console output of greenbot.service into a discord channel only seen by owner and bot",
+    "link": "https://discord.com/channels/842995720251506688/1405325712550006925/1405795046636388412",
+    "createdAt": 1755238057752,
+    "notifiedAt": null
+  },
+  {
+    "messageId": "1405795328422318221",
+    "userId": "1180570092132642936",
+    "username": "whoq",
+    "guildId": "842995720251506688",
+    "channelId": "1405325712550006925",
+    "text": "when a suggestion is completed, and the check mark is hit, delete the message or move it to a \"completed suggestions\" discord channel",
+    "link": "https://discord.com/channels/842995720251506688/1405325712550006925/1405795328422318221",
+    "createdAt": 1755238125038,
+    "notifiedAt": null
+  },
+  {
+    "messageId": "1405823235282571325",
+    "userId": "1180570092132642936",
+    "username": "whoq",
+    "guildId": "842995720251506688",
+    "channelId": "1405325712550006925",
+    "text": "FAST - - - - lower chances of ai gen by half and posting images",
+    "link": "https://discord.com/channels/842995720251506688/1405325712550006925/1405823235282571325",
+    "createdAt": 1755244778549,
+    "notifiedAt": null
+  },
+  {
+    "messageId": "1406057384807366747",
+    "userId": "602106365212622858",
+    "username": "fzbm",
+    "guildId": "842995720251506688",
+    "channelId": "1405325712550006925",
+    "text": "test",
+    "link": "https://discord.com/channels/842995720251506688/1405325712550006925/1406057384807366747",
+    "createdAt": 1755300604261,
+    "notifiedAt": null
+  },
+  {
+    "messageId": "1406066540230610975",
+    "userId": "602106365212622858",
+    "username": "fzbm",
+    "guildId": "842995720251506688",
+    "channelId": "1405325712550006925",
+    "text": "test",
+    "link": "https://discord.com/channels/842995720251506688/1405325712550006925/1406066540230610975",
+    "createdAt": 1755302786965,
+    "notifiedAt": null
+  },
+  {
+    "messageId": "1406070037009399828",
+    "userId": "602106365212622858",
+    "username": "fzbm",
+    "guildId": "842995720251506688",
+    "channelId": "1405325712550006925",
+    "text": "test",
+    "link": "https://discord.com/channels/842995720251506688/1405325712550006925/1406070037009399828",
+    "createdAt": 1755303620881,
+    "notifiedAt": null
+  },
+  {
+    "messageId": "1406070093628182689",
+    "userId": "1180570092132642936",
+    "username": "whoq",
+    "guildId": "842995720251506688",
+    "channelId": "1405325712550006925",
+    "text": "test",
+    "link": "https://discord.com/channels/842995720251506688/1405325712550006925/1406070093628182689",
+    "createdAt": 1755303634087,
+    "notifiedAt": null
   }
 ]

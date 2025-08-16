@@ -1,49 +1,53 @@
-import { Events } from "discord.js";
-import { getByMessageId, markNotified } from "../features/suggestions/registry.js";
-import { randomAck } from "../features/suggestions/dmTemplates.js";
-import { pickTone } from "../features/ai/toneStyles.js";
+// src/events/messageReactionAdd.js
 
-const CHECK = "✅";
-const OWNER_USER_ID = process.env.OWNER_ID || "";
+// FIXED: The path is now ../features, not ../../features
+import { getByMessageId } from '../features/suggestions/registry.js';
+import { isOwner } from '../shared/constants.js';
 
-function isAuthorized(_member, userId) {
-  return userId === OWNER_USER_ID; // only you approve for now
-}
-
-export const name = Events.MessageReactionAdd;
+export const name = 'messageReactionAdd';
 export const once = false;
 
+/**
+ * Handles reactions to suggestions.
+ */
 export async function execute(reaction, user) {
   try {
-    if (user?.bot) return;
+    // Ignore reactions from the bot itself
+    if (user.bot) return;
 
+    // Fetch the full message/reaction if it's a partial
     if (reaction.partial) {
-      try { await reaction.fetch(); } catch { return; }
+      try {
+        await reaction.fetch();
+      } catch (error) {
+        console.error('Something went wrong when fetching the reaction:', error);
+        return;
+      }
     }
-    const msg = reaction.message;
-    if (!msg?.id) return;
-    if (reaction.emoji?.name !== CHECK) return;
 
-    const row = await getByMessageId(msg.id);
-    if (!row) return;
+    // Check if the message this reaction is on is a tracked suggestion
+    const suggestion = await getByMessageId(reaction.message.id);
+    if (!suggestion) {
+      // Not a suggestion we're tracking, so we do nothing.
+      return;
+    }
 
-    const member = msg.guild?.members?.cache?.get(user.id) ??
-                   await msg.guild?.members?.fetch?.(user.id).catch(() => null);
-    if (!isAuthorized(member, user.id)) return;
+    // --- YOUR LOGIC GOES HERE ---
+    // Now you can act based on the emoji and user permissions.
+    // For example, check for an approve/deny emoji.
+    const emoji = reaction.emoji?.name;
+    
+    if (emoji === '👍' && isOwner(user.id)) {
+        console.log(`Owner approved suggestion from message ${reaction.message.id}`);
+        // Add your approval logic here
+    }
 
-    const didMark = await markNotified(msg.id);
-    if (!didMark) return;
+    if (emoji === '👎' && isOwner(user.id)) {
+        console.log(`Owner denied suggestion from message ${reaction.message.id}`);
+        // Add your denial logic here
+    }
 
-    const target = await msg.client.users.fetch(row.userId).catch(() => null);
-    if (!target) return;
-
-    // stable tone per suggestion card
-    const toneId = pickTone(row.messageId);
-    const text = randomAck({ username: row.username ?? "there", link: row.link, toneId });
-    await target.send(text).catch(() => {});
-
-    await msg.react("📬").catch(() => {});
-  } catch (e) {
-    console.warn("messageReactionAdd handler error:", e?.message || e);
+  } catch (err) {
+    console.error('[Suggestion Reaction Error]', err);
   }
 }

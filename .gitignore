@@ -11,5 +11,5 @@ memory/*
 !.gitkeep
 memory/*
 !.gitkeep
-data/todo.db
+data/todo/*
 todo.json
