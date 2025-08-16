@@ -13,3 +13,13 @@ memory/*
 !.gitkeep
 data/todo/*
 todo.json
+venv/
+.venv/
+env/
+ai-assistant/venv/
+ai-assistant/.venv/
+__pycache__/
+**/__pycache__/
+*.pycdata/todo/*.db
+data/todo/*.db-shm
+data/todo/*.db-wal
