@@ -10,6 +10,10 @@ import { safe } from '../../shared/safe.js';
 import { IMAGE_GEN_PHRASES, SPAMMER_INSULTS, MERGE_WINDOW_MS } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
 
+// tone engine (used only when opts.useTone === true)
+import { pickTone, tonePack } from './toneStyles.js';
+import { setToneForMessage, getToneForMessage } from '../../shared/toneContext.js';
+
 const lastMsgBuffer = new Map();
 
 function coalesceUserMessage(userId, newContent) {
@@ -28,10 +32,12 @@ function coalesceUserMessage(userId, newContent) {
   });
 }
 
-// keep behavior: warn-queue hook (noop by default)
 function shouldWarnQueue() { return true; }
 
-export async function handleAiChat(msg, interjecting) {
+// opts: { useTone?: boolean }
+export async function handleAiChat(msg, interjecting, opts = {}) {
+  const useTone = Boolean(opts.useTone);
+
   // merge bursts from same user to reduce spam into the model
   const mergedContent = await coalesceUserMessage(msg.author.id, (msg.content || '').trim());
 
@@ -48,9 +54,34 @@ export async function handleAiChat(msg, interjecting) {
   const base = content.slice(0, 1400);
   const userMessage = base || '(The user sent an empty or nonsensical message. Mock them for it.)';
 
-  const prompt = interjecting
-    ? `[You are GreenBot. Interrupt the chat with a hostile, cynical one-liner about this topic:]\n"${userMessage}"`
-    : `User's new message: "${userMessage}"`;
+  let prompt;
+
+  if (useTone) {
+    // Tone applies only for ping/reply/DM
+    const seed = `${msg.channelId}:${msg.author.id}:${msg.id}`;
+    const chosenTone = getToneForMessage(msg.id) || pickTone(seed);
+    setToneForMessage(msg.id, chosenTone);
+    const tp = tonePack(chosenTone);
+
+    const MAX_CHARS = Number(process.env.MAX_REPLY_CHARS ?? 220);
+
+    const SYSTEM = [
+      tp.sysline,
+      'Stay strictly on-topic to the latest user message.',
+      `Keep answers concise (under ${MAX_CHARS} characters).`,
+      'Do not insult unless explicitly interjecting.',
+    ].join(' ');
+
+    prompt = interjecting
+      ? `[You are GreenBot. In tone=${tp.id}, interrupt with a one-liner about this topic:]\n"${userMessage}"`
+      : `${SYSTEM}\nUser's new message: "${userMessage}"`;
+
+  } else {
+    // Original behavior (ambient): no tone system prompt
+    prompt = interjecting
+      ? `[You are GreenBot. Interrupt the chat with a hostile, cynical one-liner about this topic:]\n"${userMessage}"`
+      : `User's new message: "${userMessage}"`;
+  }
 
   if (!breakerOpen() && shouldWarnQueue(msg.author.id)) {
     // typing indicator (best-effort)
@@ -94,13 +125,32 @@ export async function handleAiChat(msg, interjecting) {
   if (interjecting) {
     // 15% chance to attempt an image
     if (Math.random() < 0.15) {
-      // 80% local pool, 20% OpenAI
       if (Math.random() < 0.80) {
         const img = await getRandomImage().catch(() => null);
         if (img) imageUrls = [img];
+        if (useTone) {
+          // tone-based lead-in
+          const toneId = getToneForMessage(msg.id);
+          if (toneId) {
+            const tp = tonePack(toneId);
+            options.content = `${tp.imageLead()}\n\n${safe(options.content)}`;
+          }
+        } else {
+          // legacy phrase
+          const chosen = IMAGE_GEN_PHRASES[Math.floor(Math.random() * IMAGE_GEN_PHRASES.length)];
+          options.content = `${chosen}\n\n${safe(options.content)}`;
+        }
       } else {
-        const chosenPhrase = IMAGE_GEN_PHRASES[Math.floor(Math.random() * IMAGE_GEN_PHRASES.length)];
-        options.content = `${chosenPhrase}\n\n${safe(options.content)}`;
+        if (useTone) {
+          const toneId = getToneForMessage(msg.id);
+          if (toneId) {
+            const tp = tonePack(toneId);
+            options.content = `${tp.imageLead()}\n\n${safe(options.content)}`;
+          }
+        } else {
+          const chosen = IMAGE_GEN_PHRASES[Math.floor(Math.random() * IMAGE_GEN_PHRASES.length)];
+          options.content = `${chosen}\n\n${safe(options.content)}`;
+        }
         const generated = await generateImage(userMessage).catch(() => null);
         if (generated?.length) imageUrls = generated;
       }

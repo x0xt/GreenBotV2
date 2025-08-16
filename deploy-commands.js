@@ -73,26 +73,56 @@ async function clearGlobalCommands() {
   console.log('Cleared ALL global commands');
 }
 
+// ---- New loader that supports .js (ESM) and .cjs (CJS) ----
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'src', 'commands');
+
   if (!fs.existsSync(commandsPath)) {
     console.error(`Commands path not found: ${commandsPath}`);
     process.exit(1);
   }
-  const files = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
+
+  // allow ESM and CJS; skip hidden/underscore/test files
+  const files = fs
+    .readdirSync(commandsPath)
+    .filter(f =>
+      (f.endsWith('.js') || f.endsWith('.cjs')) &&
+      !f.startsWith('_') &&
+      !f.startsWith('.') &&
+      !f.endsWith('.test.js') &&
+      !f.endsWith('.spec.js')
+    );
+
   if (files.length === 0) {
-    console.error(`No .js command files found in ${commandsPath}`);
+    console.error(`No .js or .cjs command files found in ${commandsPath}`);
     process.exit(1);
   }
+
   const cmds = [];
+
   for (const file of files) {
-    const mod = await import(`file://${path.join(commandsPath, file)}`);
-    if (!mod?.data?.toJSON) {
-      console.warn(`Skipping ${file}: missing export "data" with toJSON()`);
-      continue;
+    const full = path.join(commandsPath, file);
+    try {
+      // dynamic import works in ESM; CJS arrives under `default`
+      const mod = await import(`file://${full}`);
+
+      // Support:
+      //  - ESM:      export const data = new SlashCommandBuilder()...
+      //  - ESM def:  export default { data, execute }
+      //  - CJS:      module.exports = { data, execute }   (=> mod.default)
+      const data = mod?.data ?? mod?.default?.data;
+
+      if (!data?.toJSON) {
+        console.warn(`Skipping ${file}: missing export "data" with toJSON()`);
+        continue;
+      }
+
+      cmds.push(data.toJSON());
+    } catch (err) {
+      console.warn(`Skipping ${file}: failed to import -> ${err?.message || err}`);
     }
-    cmds.push(mod.data.toJSON());
   }
+
   return cmds;
 }
 
@@ -123,12 +153,9 @@ async function loadCommands() {
       await deployGlobal(commands);
     }
 
-    // ✅ ensure ExecStartPre ends
     process.exit(0);
-
   } catch (err) {
     console.error('Deploy failed:', err?.message || err);
     process.exit(1);
   }
 })();
-

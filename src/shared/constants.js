@@ -1,23 +1,28 @@
+// src/shared/constants.js
 import path from 'path';
 
-// --- Environment ---
+// --- Environment (keep your existing stuff) ---
 export const {
-DISCORD_TOKEN,
-OLLAMA_HOST = 'http://127.0.0.1:11434',
-MODEL = 'greenbot',
-OWNER_ID,
-SUGGEST_CHANNEL_ID,
-SUGGEST_COOLDOWN_SECONDS = '60',
+  DISCORD_TOKEN,
+  OLLAMA_HOST = 'http://127.0.0.1:11434',
+  MODEL = 'greenbot',
+  OWNER_ID,
+  SUGGEST_CHANNEL_ID,
+  SUGGEST_COOLDOWN_SECONDS = '60',
 } = process.env;
 
-// --- Image System Settings ---
+// ✅ Added: explicit ids that other modules import
+export const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID || '';
+export const TODO_CHANNEL_ID  = process.env.TODO_CHANNEL_ID  || '';
+
+// --- Image System Settings (yours) ---
 export const IMAGE_POOL_ROOT = path.resolve('./medias/pool');
 export const IMAGE_POOL_MAX_FILES = 100;
 export const IMAGE_INTERJECT_PROB = 0.05;
 export const IMAGE_MAX_SIZE_BYTES = 50 * 1024 * 1024;
 export const IMAGE_ALLOW_IN_SFW = false;
 export const IMAGE_ALLOWED_EXTENSIONS = [
-'.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mov', '.webm'
+  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mov', '.webm'
 ];
 export const TIMEOUT_ERROR_GIF = path.resolve('./medias/lobotomy.gif');
 export const TIMEOUT_ERROR_GIF_NAME = 'lobotomy.gif';
@@ -34,8 +39,7 @@ export const IMAGE_GEN_PHRASES = [
   "i'm bored. so i'll do this. just for me, really."
 ];
 
-
-// --- Anti-Spam / Backpressure Knobs ---
+// --- Anti-Spam / Backpressure Knobs (yours) ---
 export const PER_USER_MAX_INFLIGHT = 1;
 export const PER_USER_MAX_QUEUE = 10;
 export const GLOBAL_MAX_INFLIGHT = 1;
@@ -46,27 +50,58 @@ export const BREAKER_FAILS = 3;
 export const BREAKER_COOLDOWN_MS = 15_000;
 export const MERGE_WINDOW_MS = 250;
 
-// --- Interject Settings ---
+// --- Interject Settings (yours) ---
 export const INTERJECT_ENABLED = true;
 export const INTERJECT_PROB = 0.05;
 export const INTERJECT_COOLDOWN_MS = 120_000;
 
-// --- Memory Settings ---
+// --- Memory Settings (yours) ---
 export const MEMORY_ROOT = path.resolve('./memory');
 export const MAX_LINES = 300;
 export const SNIPPET_LINES = 40;
 
-// --- Error Messages ---
+// --- Error Messages (yours) ---
 export const TIMEOUT_INSULTS = [
-"my brain is melting from your stupid request. try again later, moron.",
-"the gears are grinding. either that was a dumb question or the server is on fire. probably both.",
-"processing that garbage literally broke me. good job, genius.",
-"i'm too busy for this nonsense. ask me again when you have something interesting to say.",
-"error: user is too boring. system shutting down."
+  "my brain is melting from your stupid request. try again later, moron.",
+  "the gears are grinding. either that was a dumb question or the server is on fire. probably both.",
+  "processing that garbage literally broke me. good job, genius.",
+  "i'm too busy for this nonsense. ask me again when you have something interesting to say.",
+  "error: user is too boring. system shutting down."
 ];
 export const SPAMMER_INSULTS = [
-"whoa, slow down there, fuckwad. you ain't that important.",
-"spamming isn't a personality trait, it's a cry for help. get one.",
-"are you trying to DDoS my brain with your bullshit? knock it off.",
-"you're sending messages faster than your last two brain cells can fire. chill out."
+  "whoa, slow down there, fuckwad. you ain't that important.",
+  "spamming isn't a personality trait, it's a cry for help. get one.",
+  "are you trying to DDoS my brain with your bullshit? knock it off.",
+  "you're sending messages faster than your last two brain cells can fire. chill out."
 ];
+
+// ======================
+// ✅ New bits for TODOs
+// ======================
+
+// IDs → arrays (optional helpers, won’t break old OWNER_ID usage)
+const toIdArray = (s) => (s ? String(s).split(',').map(x => x.trim()).filter(Boolean) : []);
+export const OWNER_IDS = toIdArray(process.env.BOT_OWNER_IDS || process.env.OWNER_IDS);
+export const ADMIN_IDS = toIdArray(process.env.BOT_ADMIN_IDS || process.env.ADMIN_IDS);
+
+// include legacy single OWNER_ID in isOwner
+export const isOwner = (userId) =>
+  OWNER_ID === String(userId) || OWNER_IDS.includes(String(userId));
+export const isAdmin = (userId) =>
+  isOwner(userId) || ADMIN_IDS.includes(String(userId));
+
+// Cooldowns
+const toInt = (v, def) => {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n >= 0 ? n : def;
+};
+export const TODO_COOLDOWN_SECONDS = toInt(process.env.TODO_COOLDOWN_SECONDS, 5);
+export const SUGGEST_COOLDOWN_SECONDS_NUM = toInt(SUGGEST_COOLDOWN_SECONDS, 60); // keep your string export as-is, add numeric helper
+
+// Paths for SQLite storage
+export const DATA_DIR      = process.env.DATA_DIR      || path.join(process.cwd(), 'data');
+export const TODO_DATA_DIR = process.env.TODO_DATA_DIR || path.join(DATA_DIR, 'todo');
+export const TODO_DB_PATH  = process.env.TODO_DB_PATH  || path.join(TODO_DATA_DIR, 'todos.db');
+
+// Feature flag placeholder (if you want to hide research)
+export const ENABLE_RESEARCH = String(process.env.ENABLE_RESEARCH || '').toLowerCase() === 'true';
