@@ -177,7 +177,8 @@ export async function collectImage(msg) {
     const urls = new Set();
 
     // 1) attachments
-    for (const att of msg.attachments?.values?.() ? msg.attachments.values() : msg.attachments || []) {
+    
+for (const att of [...(msg.attachments?.values?.() ?? [])]) {
       if (att?.url) {
         const u = tidyUrl(att.url);
         if (u) urls.add(u);

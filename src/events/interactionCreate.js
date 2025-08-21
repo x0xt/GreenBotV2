@@ -1,4 +1,4 @@
-// File to create: src/events/interactionCreate.js
+// src/events/interactionCreate.js
 
 import { Events } from 'discord.js';
 
@@ -22,11 +22,12 @@ export async function execute(interaction) {
     console.error(`Error executing ${interaction.commandName}`);
     console.error(error);
     
-    // Reply to the user with an error message
+    // --- CORRECTED ERROR REPLY ---
+    // Reply to the user with an error message using the new flags system
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+      await interaction.followUp({ content: 'There was an error while executing this command!', flags: 64 });
     } else {
-      await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+      await interaction.reply({ content: 'There was an error while executing this command!', flags: 64 });
     }
   }
 }

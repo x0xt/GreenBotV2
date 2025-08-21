@@ -1,3 +1,4 @@
+import { humanize } from "../../../shared/humanize.js";
 // src/features/ai/runner/runAssistant.js
 import { spawn } from "node:child_process";
 import path from "node:path";
@@ -51,7 +52,7 @@ export function runAssistant(query, { onTick, onDone, onError, timeoutMs = 12000
     clearTimeout(timer);
     clearInterval(ticker);
     if (code === 0 && out.trim()) {
-      onDone?.(out.trim(), Math.floor((Date.now() - started) / 1000));
+      onDone?.(humanize(out.trim()), Math.floor((Date.now() - started) / 1000));
     } else {
       onError?.(err.trim() || out.trim() || `exit ${code}`, Math.floor((Date.now() - started) / 1000));
     }

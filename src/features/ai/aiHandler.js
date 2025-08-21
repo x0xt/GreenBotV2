@@ -1,3 +1,4 @@
+import { humanize } from "../../shared/humanize.js";
 // file: src/features/ai/aiHandler.js
 import { EmbedBuilder } from 'discord.js';
 import { schedule, breakerOpen, recordFailure } from './backpressure.js';
@@ -7,7 +8,7 @@ import { appendUserMemory } from '../user/userMemory.js';
 import { getRandomImage } from '../media/imagePool.js';
 import { generateImage } from './imageGenerator.js';
 import { safe } from '../../shared/safe.js';
-import { IMAGE_GEN_PHRASES, SPAMMER_INSULTS, MERGE_WINDOW_MS } from '../../shared/constants.js';
+import { IMAGE_GEN_PHRASES, SPAMMER_INSULTS, MERGE_WINDOW_MS, INTERJECT_PROB, IMAGE_ATTEMPT_PROB, TIMEOUT_INSULTS } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
 
 // tone engine (used only when opts.useTone === true)
@@ -73,13 +74,13 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     ].join(' ');
 
     prompt = interjecting
-      ? `[You are GreenBot. In tone=${tp.id}, interrupt with a one-liner about this topic:]\n"${userMessage}"`
+      ? `[${tp.id} vibe: interrupt with a one-liner on this topic]\n"${userMessage}"`
       : `${SYSTEM}\nUser's new message: "${userMessage}"`;
 
   } else {
     // Original behavior (ambient): no tone system prompt
     prompt = interjecting
-      ? `[You are GreenBot. Interrupt the chat with a hostile, cynical one-liner about this topic:]\n"${userMessage}"`
+      ? `[Interrupt with a hostile, cynical one-liner about this topic]\n"${userMessage}"`
       : `User's new message: "${userMessage}"`;
   }
 
@@ -124,8 +125,8 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   if (interjecting) {
     // 15% chance to attempt an image
-    if (Math.random() < 0.15) {
-      if (Math.random() < 0.80) {
+    if (Math.random() < IMAGE_ATTEMPT_PROB) {
+      if (Math.random() < 0.99) {
         const img = await getRandomImage().catch(() => null);
         if (img) imageUrls = [img];
         if (useTone) {
@@ -166,5 +167,5 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   }
 
   // ALWAYS reply something (even if model timed out)
-  await msg.reply(options).catch((e) => console.error('reply err:', e?.message || e));
+  await msg.reply(humanize(options)).catch((e) => console.error('reply err:', e?.message || e));
 }

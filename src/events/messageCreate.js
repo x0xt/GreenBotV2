@@ -11,6 +11,8 @@ import { cooldownOk, roll } from '../shared/probability.js';
 import { getRandomImage } from '../features/media/imagePool.js';
 import { generateImage } from '../features/ai/imageGenerator.js';
 
+import { MYSTIQUE_STRICT, MYSTIQUE_EVASIVE_LINES } from "../shared/constants.js";
+
 // NEW: server-about FAQ hook
 import { maybeAnswerServerAbout } from '../features/faq/serverAbout.js';
 
@@ -28,6 +30,24 @@ export const once = false;
 export async function execute(msg) {
   try {
     if (msg.author?.bot) return;
+  // direct Q: dodge instead of admitting/denying (mystique-evasive)
+  try {
+    const txt = String(msg.content || "");
+    if (MYSTIQUE_STRICT && /(\bare you (a )?bot\b|\bare you human\b)/i.test(txt)) {
+      const lines = Array.isArray(MYSTIQUE_EVASIVE_LINES) && MYSTIQUE_EVASIVE_LINES.length ? MYSTIQUE_EVASIVE_LINES : ["who’s asking?"];
+      const pick = lines[Math.floor(Math.random() * lines.length)];
+      void msg.reply(pick);
+      return;
+    }
+  } catch {}
+  // direct Q: are you a bot?
+  try {
+    const txt = String(msg.content || "");
+    if (/(?:\bare you (a )?bot\b|\bare you human\b)/i.test(txt)) {
+      void msg.reply("BOT? LOL. no. If i was a bOt explain how i sneed your momlol loo ol");
+      return;
+    }
+  } catch {}
 
     // Non-blocking side effects
     Promise.allSettled([
@@ -42,7 +62,7 @@ export async function execute(msg) {
 
     // Legacy prefix nudge
     if (raw.startsWith('!gb') || /^!\w+/.test(raw)) {
-      await msg.reply({
+      void msg.reply({
         content: 'Use slash commands now → try **`/health`**, **`/suggest`**.',
         allowedMentions: { parse: [], repliedUser: false },
       });
@@ -75,7 +95,7 @@ export async function execute(msg) {
       if (cooled && lucky) {
         let imageUrls = null;
 
-        if (Math.random() < 0.8) {
+        if (Math.random() < 0.2) {
           const imgPath = await getRandomImage().catch(() => null);
           if (imgPath) imageUrls = [imgPath];
         } else {

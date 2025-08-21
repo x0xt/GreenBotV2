@@ -1,79 +1,43 @@
-// src/events/react/messageReactionAddTodos.js
-import {
-  TODO_CHANNEL_ID,
-  isOwner,
-} from '../../shared/constants.js';
-import {
-  getByMessageId,
-  toggleByMessageId,
-  deleteByMessageId,
-} from '../../features/todo/dao.js';
+import { TODO_CHANNEL_ID, TODO_COMPLETED_CHANNEL_ID, isOwner } from '../../shared/constants.js';
+import { getByMessageId, toggleByMessageId, deleteByMessageId } from '../../features/todo/dao.js';
 import { renderTodoEmbed } from '../../features/todo/renderer.js';
 
-export const name = 'messageReactionAdd';
-export const once = false;
+export async function handleTodoReaction(reaction, user) {
+  const message = reaction.message;
+  if (String(message.channelId) !== String(TODO_CHANNEL_ID)) return false;
 
-/**
- * Rules:
- * - Only handle reactions in TODO_CHANNEL_ID
- * - ✅ toggle done (allowed for owner OR original author)
- * - 🗑️ delete (owner only)
- */
-export async function execute(reaction, user) {
+  const emoji = reaction.emoji?.name;
+  if (emoji !== '✅' && emoji !== '🗑️') return false;
+
   try {
-    // ignore bot reactions
-    if (user.bot) return;
-
-    // ensure full objects for partials
-    if (reaction.partial) {
-      try { await reaction.fetch(); } catch { return; }
-    }
-    const message = reaction.message;
-    if (!message || !message.channel) return;
-
-    // only our TODO channel
-    if (String(message.channelId) !== String(TODO_CHANNEL_ID)) return;
-
-    const emoji = reaction.emoji?.name;
-    if (emoji !== '✅' && emoji !== '🗑️') return;
-
-    // DB row
     const row = getByMessageId(message.id);
-    if (!row) return; // not one of our tracked todos
+    if (!row) return false;
 
-    // perms
-    const isAuthor = String(user.id) === String(row.author_id);
-    const canToggle = isOwner(user.id) || isAuthor;
-    const canDelete = isOwner(user.id);
+    const isOriginalAuthor = String(user.id) === String(row.author_id);
+    const isBotOwner = isOwner(user.id);
+    const canToggle = isBotOwner || isOriginalAuthor;
+    const canDelete = isBotOwner;
 
-    if (emoji === '✅') {
-      if (!canToggle) return;
+    if (emoji === '✅' && canToggle) {
       const newDone = toggleByMessageId(message.id);
-      if (newDone === null) return;
-
-      // re-render message embed
-      const embed = renderTodoEmbed({
-        text: row.text,
-        done: !!newDone,
-        authorName: message.author?.username || 'unknown',
-        authorIcon: message.author?.displayAvatarURL?.() || undefined,
-      });
-      await message.edit({ embeds: [embed] }).catch(() => {});
-      // remove user’s reaction to keep things tidy
-      await reaction.users.remove(user.id).catch(() => {});
-      return;
-    }
-
-    if (emoji === '🗑️') {
-      if (!canDelete) return;
-      const ok = deleteByMessageId(message.id);
-      if (ok) {
-        await message.delete().catch(() => {});
+      if (newDone) { // Only post completion message when it's marked as done
+        const completionChannel = await message.client.channels.fetch(TODO_COMPLETED_CHANNEL_ID).catch(() => null);
+        if (completionChannel) {
+          const originalAuthor = await message.client.users.fetch(row.author_id).catch(() => null);
+          const authorName = originalAuthor ? originalAuthor.tag : 'An unknown user';
+          completionChannel.send(`✅ To-do completed by **${user.tag}** (originally created by **${authorName}**):\n> ${row.text}`);
+        }
       }
-      return;
+      await message.delete(); // Delete the original to-do message
+    } else if (emoji === '🗑️' && canDelete) {
+      await deleteByMessageId(message.id);
+      await message.delete();
+    } else {
+      await reaction.users.remove(user.id);
     }
   } catch (err) {
-    // keep it quiet in prod, you can log if you want:
-    // console.error('[todo reaction error]', err);
+    console.error('[todo reaction error]', err);
   }
+
+  return true;
 }
