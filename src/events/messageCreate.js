@@ -2,8 +2,8 @@
 import { Events, ChannelType, EmbedBuilder } from 'discord.js';
 import { handleAiChat } from '../features/ai/aiHandler.js';
 import { collectImage } from '../features/media/imageCollector.js';
-import { INTERJECT_ENABLED, INTERJECT_PROB, INTERJECT_COOLDOWN_MS, IMAGE_GEN_PHRASES, BEEPY_ID } from '../shared/constants.js';
-import { recordMessage, checkRage } from '../features/ai/spamTracker.js';
+import { INTERJECT_ENABLED, INTERJECT_PROB, INTERJECT_COOLDOWN_MS, BEEPY_ID } from '../shared/constants.js';
+import { recordMessage, mirrorSpam } from '../features/ai/spamTracker.js';
 import { safe } from '../shared/safe.js';
 
 import { isNonTextPayload } from '../shared/isNonTextPayload.js';
@@ -11,24 +11,9 @@ import { isReplyToBot } from '../shared/isReplyToBot.js';
 import { cooldownOk, roll } from '../shared/probability.js';
 import { getRandomImage } from '../features/media/imagePool.js';
 
-import { MYSTIQUE_STRICT, MYSTIQUE_EVASIVE_LINES } from "../shared/constants.js";
+import { MYSTIQUE_STRICT, MYSTIQUE_EVASIVE_LINES } from '../shared/constants.js';
 
 
-const MIRROR_INSULTS = [
-  'SHUT UP', 'GO FUCK YOURSELF', 'IDIOT', 'MORON', 'KILL YOUR WIFI',
-  'NOBODY CARES', 'GET HELP', 'TOUCH GRASS', 'I HATE YOU', 'STOP',
-  'WHAT IS WRONG WITH YOU', 'LOSER', 'YOUR MOM', 'PATHETIC', 'DIE MAD'
-];
-
-function mirrorSpam(word) {
-  const count = Math.floor(Math.random() * 150) + 80;
-  const out = [];
-  for (let i = 0; i < count; i++) {
-    if (Math.random() < 0.08) out.push(MIRROR_INSULTS[Math.floor(Math.random() * MIRROR_INSULTS.length)]);
-    else out.push(Math.random() < 0.5 ? word.toUpperCase() : word.toLowerCase());
-  }
-  return out.join(' ').slice(0, 1900);
-}
 
 const lastInterjectAt = new Map();
 const canInterject = (ch) => (Date.now() - (lastInterjectAt.get(ch) ?? 0)) >= INTERJECT_COOLDOWN_MS;

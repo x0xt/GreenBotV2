@@ -7,10 +7,11 @@ import { ollamaChat } from './ollamaClient.js';
 import { shapeWithSeed } from './tone.js';
 import { appendUserMemory, readUserMemory } from '../user/userMemory.js';
 import { getHistory, pushHistory } from './conversationHistory.js';
-import { checkRage } from './spamTracker.js';
+import { getDepth, incrementDepth } from './depthTracker.js';
+import { checkRage, mirrorSpam } from './spamTracker.js';
 import { getRandomImage } from '../media/imagePool.js';
 import { safe } from '../../shared/safe.js';
-import { IMAGE_GEN_PHRASES, SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB } from '../../shared/constants.js';
+import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
 
 const lastMsgBuffer = new Map();
@@ -85,8 +86,8 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   // Run through scheduler/backpressure and call the model
   const reply = await schedule(msg.author.id, async () => {
     try {
-      const raw = await ollamaChat(messages, Math.floor(messages.length / 2));
-      return shapeWithSeed(raw, 900, `${msg.id}:${msg.author.id}`);
+      const raw = await ollamaChat(messages, getDepth(msg.author.id));
+      return shapeWithSeed(raw, 1800, `${msg.id}:${msg.author.id}`);
     } catch (e) {
       console.error('OLLAMA ERR:', e);
       recordFailure();
@@ -109,10 +110,11 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     logChat(guildId, msg.author.id, msg.author.username, userMessage, reply);
   }
 
-  // Push to conversation history so next response can escalate
+  // Push to conversation history and increment depth
   if (!interjecting) {
     pushHistory(channelId, 'user', userMessage);
     pushHistory(channelId, 'assistant', reply);
+    incrementDepth(msg.author.id);
   }
 
   // Assemble final reply message; include occasional images during interjections

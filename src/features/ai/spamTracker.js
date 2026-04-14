@@ -74,3 +74,19 @@ export function checkRage(channelId, userId) {
   const s = getState(channelId, userId);
   return s.raging ? s.word : null;
 }
+
+const MIRROR_INSULTS = [
+  'SHUT UP', 'GO FUCK YOURSELF', 'IDIOT', 'MORON', 'KILL YOUR WIFI',
+  'NOBODY CARES', 'GET HELP', 'TOUCH GRASS', 'I HATE YOU', 'STOP',
+  'WHAT IS WRONG WITH YOU', 'LOSER', 'YOUR MOM', 'PATHETIC', 'DIE MAD'
+];
+
+export function mirrorSpam(word) {
+  const count = Math.floor(Math.random() * 150) + 80;
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    if (Math.random() < 0.08) out.push(MIRROR_INSULTS[Math.floor(Math.random() * MIRROR_INSULTS.length)]);
+    else out.push(Math.random() < 0.5 ? word.toUpperCase() : word.toLowerCase());
+  }
+  return out.join(' ').slice(0, 1900);
+}
