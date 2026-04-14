@@ -13,6 +13,7 @@ import { getRandomImage } from '../media/imagePool.js';
 import { safe } from '../../shared/safe.js';
 import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
+import { trackAndCheck } from './milestones.js';
 
 const lastMsgBuffer = new Map();
 
@@ -156,4 +157,14 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   // ALWAYS reply something (even if model timed out)
   await msg.reply(humanize(options)).catch((e) => console.error('reply err:', e?.message || e));
+
+  // Milestone easter egg — fires as a follow-up after the normal reply
+  if (!interjecting && !msg.author.bot) {
+    const egg = trackAndCheck(msg.author.id, msg.guild?.id ?? null);
+    if (egg) {
+      setTimeout(() => {
+        msg.channel.send({ content: egg, allowedMentions: { parse: [], repliedUser: false } }).catch(() => {});
+      }, 1500);
+    }
+  }
 }
