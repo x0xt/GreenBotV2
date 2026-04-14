@@ -6,6 +6,7 @@ import { schedule, breakerOpen, recordFailure } from './backpressure.js';
 import { ollamaChat } from './ollamaClient.js';
 import { shapeWithSeed } from './tone.js';
 import { appendUserMemory, readUserMemory } from '../user/userMemory.js';
+import { getHistory, pushHistory } from './conversationHistory.js';
 import { getRandomImage } from '../media/imagePool.js';
 import { generateImage } from './imageGenerator.js';
 import { safe } from '../../shared/safe.js';
@@ -54,9 +55,16 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     ? `[things this person has said before — use it against them if you feel like it]\n${pastSnippet}\n\n`
     : '';
 
-  const prompt = interjecting
-    ? `${memBlock}[someone just posted this, butt in with something]\n"${userMessage}"`
-    : `${memBlock}${userMessage}`;
+  const channelId = msg.channel.id;
+
+  // Build messages array: history + current message
+  // Interjections are stateless — no history, just butt in
+  const messages = interjecting
+    ? [{ role: 'user', content: `${memBlock}[someone just posted this, butt in]\n"${userMessage}"` }]
+    : [
+        ...getHistory(channelId),
+        { role: 'user', content: `${memBlock}${userMessage}` },
+      ];
 
   if (!breakerOpen() && shouldWarnQueue(msg.author.id)) {
     // typing indicator (best-effort)
@@ -66,7 +74,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   // Run through scheduler/backpressure and call the model
   const reply = await schedule(msg.author.id, async () => {
     try {
-      const raw = await ollamaChat(prompt);
+      const raw = await ollamaChat(messages);
       return shapeWithSeed(raw, 900, `${msg.id}:${msg.author.id}`);
     } catch (e) {
       console.error('OLLAMA ERR:', e);
@@ -83,10 +91,18 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     return 'brain lag — try again in a sec.';
   });
 
-  // Persist memory + log (non-blocking)
+  // Persist memory + log (non-blocking) — skip for bots, privacy policy is human-only
   const guildId = msg.guild?.id ?? null;
-  appendUserMemory(guildId, msg.author.id, base || mergedContent).catch(() => {});
-  logChat(guildId, msg.author.id, msg.author.username, userMessage, reply);
+  if (!msg.author.bot) {
+    appendUserMemory(guildId, msg.author.id, base || mergedContent).catch(() => {});
+    logChat(guildId, msg.author.id, msg.author.username, userMessage, reply);
+  }
+
+  // Push to conversation history so next response can escalate
+  if (!interjecting) {
+    pushHistory(channelId, 'user', userMessage);
+    pushHistory(channelId, 'assistant', reply);
+  }
 
   // Assemble final reply message; include occasional images during interjections
   const options = {
@@ -98,6 +114,9 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   let imageUrls = null;
 
   if (interjecting && Math.random() < IMAGE_ATTEMPT_PROB) {
+    const img = await getRandomImage().catch(() => null);
+    if (img) imageUrls = [img];
+  } else if (!interjecting && Math.random() < 0.07) {
     const img = await getRandomImage().catch(() => null);
     if (img) imageUrls = [img];
   }

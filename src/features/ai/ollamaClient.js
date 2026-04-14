@@ -1,7 +1,7 @@
 import { OLLAMA_HOST, MODEL, REQ_TIMEOUT_MS } from '../../shared/constants.js';
 
 // This function already uses AbortController for timeouts, it's very robust.
-export async function ollamaChat(text) {
+export async function ollamaChat(messages) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), REQ_TIMEOUT_MS);
   try {
@@ -10,7 +10,7 @@ export async function ollamaChat(text) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         model: MODEL,
-        messages: [{ role: 'user', content: text }],
+        messages,
         stream: false,
         keep_alive: '30m',
         options: { num_predict: 320 }

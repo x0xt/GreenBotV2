@@ -9,6 +9,9 @@ function removeBotSelfRefs(text) {
     .replace(/\b(i'?m|i am)\s+(an?\s+)?bot\b.*?(?=[\.\!\?]|$)/gi, '')
     .replace(/\b(as a language model)\b.*?(?=[\.\!\?]|$)/gi, '')
     .replace(/\b(i cannot|i can't)\s+assist\s+with\s+that\s+as\s+an?\s+ai\b/gi, '')
+    .replace(/^greenbot\s+here[,\s]*/i, '')
+    .replace(/^(i'?m|i am)\s+greenbot[,\s]*/i, '')
+    .replace(/^greenbot\s*:/i, '')
     .replace(/\s{2,}/g, ' ');
 }
 

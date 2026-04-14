@@ -2,7 +2,7 @@
 import { Events, ChannelType, EmbedBuilder } from 'discord.js';
 import { handleAiChat } from '../features/ai/aiHandler.js';
 import { collectImage } from '../features/media/imageCollector.js';
-import { INTERJECT_ENABLED, INTERJECT_PROB, INTERJECT_COOLDOWN_MS, IMAGE_GEN_PHRASES } from '../shared/constants.js';
+import { INTERJECT_ENABLED, INTERJECT_PROB, INTERJECT_COOLDOWN_MS, IMAGE_GEN_PHRASES, BEEPY_ID } from '../shared/constants.js';
 
 import { isNonTextPayload } from '../shared/isNonTextPayload.js';
 import { isReplyToBot } from '../shared/isReplyToBot.js';
@@ -26,7 +26,8 @@ export const once = false;
 
 export async function execute(msg) {
   try {
-    if (msg.author?.bot) return;
+    if (msg.author?.id === msg.client.user?.id) return; // never reply to itself
+    const isBot = msg.author?.bot ?? false;
   // direct Q: dodge instead of admitting/denying (mystique-evasive)
   try {
     const txt = String(msg.content || "");
@@ -68,9 +69,15 @@ export async function execute(msg) {
     // Tone ON only when targeted
     const targeted = inDM || mentioned || repliedTo;
 
-    // Ambient interjects only on media (never plain text)
+    // Beepy gets picked on randomly — 35% chance greenbot fires back unprompted
+    if (isBot && msg.author.id === BEEPY_ID && !targeted && Math.random() < 0.35) {
+      await handleAiChat(msg, false, { useTone: true });
+      return;
+    }
+
+    // Ambient interjects only on media, never on other bots (loop prevention)
     let interjecting = false;
-    if (!targeted && INTERJECT_ENABLED && isNonTextPayload(msg) && msg.guild && canInterject(msg.channel.id) && Math.random() < INTERJECT_PROB) {
+    if (!targeted && !isBot && INTERJECT_ENABLED && isNonTextPayload(msg) && msg.guild && canInterject(msg.channel.id) && Math.random() < INTERJECT_PROB) {
       interjecting = true;
       markInterject(msg.channel.id);
     }
