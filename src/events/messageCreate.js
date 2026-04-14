@@ -10,7 +10,6 @@ import { isNonTextPayload } from '../shared/isNonTextPayload.js';
 import { isReplyToBot } from '../shared/isReplyToBot.js';
 import { cooldownOk, roll } from '../shared/probability.js';
 import { getRandomImage } from '../features/media/imagePool.js';
-import { generateImage } from '../features/ai/imageGenerator.js';
 
 import { MYSTIQUE_STRICT, MYSTIQUE_EVASIVE_LINES } from "../shared/constants.js";
 
@@ -121,18 +120,8 @@ export async function execute(msg) {
 
       if (cooled && lucky) {
         let imageUrls = null;
-
-        if (Math.random() < 0.2) {
-          const imgPath = await getRandomImage().catch(() => null);
-          if (imgPath) imageUrls = [imgPath];
-        } else {
-          if (Array.isArray(IMAGE_GEN_PHRASES) && IMAGE_GEN_PHRASES.length) {
-            const phrase = IMAGE_GEN_PHRASES[Math.floor(Math.random() * IMAGE_GEN_PHRASES.length)];
-            await msg.channel.send(phrase).catch(() => {});
-          }
-          const generated = await generateImage('random chaos').catch(() => null);
-          if (generated?.length) imageUrls = generated;
-        }
+        const imgPath = await getRandomImage().catch(() => null);
+        if (imgPath) imageUrls = [imgPath];
 
         if (imageUrls?.length) {
           for (const u of imageUrls.slice(0, 3)) {

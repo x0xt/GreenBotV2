@@ -9,7 +9,6 @@ import { appendUserMemory, readUserMemory } from '../user/userMemory.js';
 import { getHistory, pushHistory } from './conversationHistory.js';
 import { checkRage } from './spamTracker.js';
 import { getRandomImage } from '../media/imagePool.js';
-import { generateImage } from './imageGenerator.js';
 import { safe } from '../../shared/safe.js';
 import { IMAGE_GEN_PHRASES, SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
