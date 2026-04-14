@@ -25,11 +25,11 @@ function randomTokenBudget(depth = 0) {
 }
 
 function tempForDepth(depth = 0) {
-  if (depth >= 50) return 1.4;   // deeply unhinged but still legible
-  if (depth >= 35) return 1.25;
-  if (depth >= 20) return 1.15;
-  if (depth >= 10) return 1.05;
-  return 0.9;                    // base — coherent but still unhinged
+  if (depth >= 50) return 1.9;   // full word salad, barely coherent
+  if (depth >= 35) return 1.6;   // losing it
+  if (depth >= 20) return 1.3;   // noticeably off
+  if (depth >= 10) return 1.1;   // slight weirdness creeping in
+  return 0.9;                    // coherent, just mean
 }
 
 // This function already uses AbortController for timeouts, it's very robust.
