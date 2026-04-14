@@ -18,10 +18,10 @@ function randomTokenBudget(depth = 0) {
     if (r < 0.65) return Math.floor(Math.random() * 70) + 90;   // medium: 90-160
     return Math.floor(Math.random() * 80) + 140;                 // long: 140-220
   }
-  // 0-7 exchanges: short/medium heavy, nothing below 60 tokens (no more cut-offs)
-  if (r < 0.55) return Math.floor(Math.random() * 40) + 60;     // short: 60-100
-  if (r < 0.90) return Math.floor(Math.random() * 70) + 90;     // medium: 90-160
-  return Math.floor(Math.random() * 80) + 150;                   // long: 150-230
+  // 0-7 exchanges: short and punchy
+  if (r < 0.55) return Math.floor(Math.random() * 30) + 35;     // short: 35-65
+  if (r < 0.90) return Math.floor(Math.random() * 50) + 65;     // medium: 65-115
+  return Math.floor(Math.random() * 60) + 120;                   // long: 120-180
 }
 
 function tempForDepth(depth = 0) {
@@ -29,7 +29,7 @@ function tempForDepth(depth = 0) {
   if (depth >= 35) return 1.6;   // losing it
   if (depth >= 20) return 1.3;   // noticeably off
   if (depth >= 10) return 1.1;   // slight weirdness creeping in
-  return 0.9;                    // coherent, just mean
+  return 1.05;                   // punchy and mean, not a reddit essay
 }
 
 // This function already uses AbortController for timeouts, it's very robust.
