@@ -25,3 +25,4 @@ data/todo/*.db-shm
 data/todo/*.db-wal
 
 medias/pool/
+logs/

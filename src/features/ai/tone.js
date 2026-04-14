@@ -23,12 +23,12 @@ function spongeCaseSeeded(text, seed) {
   return out;
 }
 
-export function shapeWithSeed(text, max = 240, seedStr) {
+export function shapeWithSeed(text, max = 900, seedStr) {
   let t = (text || '').replace(/\s+/g, ' ').trim();
   const r = rnd01(hash32(seedStr));
 
-  if (r < 0.2) { t = t.toUpperCase(); }
-  else if (r < 0.4) { t = spongeCaseSeeded(t, seedStr); }
+  if (r < 0.35) { t = t.toUpperCase(); }
+  else if (r < 0.65) { t = spongeCaseSeeded(t, seedStr); }
   else { t = t.toLowerCase(); }
 
   if (t.length <= max) return t;

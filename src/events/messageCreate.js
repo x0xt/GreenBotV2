@@ -1,6 +1,5 @@
 // file: src/events/messageCreate.js
 import { Events, ChannelType, EmbedBuilder } from 'discord.js';
-import { touchUserMemory } from '../features/user/userMemory.js';
 import { handleAiChat } from '../features/ai/aiHandler.js';
 import { collectImage } from '../features/media/imageCollector.js';
 import { INTERJECT_ENABLED, INTERJECT_PROB, INTERJECT_COOLDOWN_MS, IMAGE_GEN_PHRASES } from '../shared/constants.js';
@@ -13,8 +12,6 @@ import { generateImage } from '../features/ai/imageGenerator.js';
 
 import { MYSTIQUE_STRICT, MYSTIQUE_EVASIVE_LINES } from "../shared/constants.js";
 
-// NEW: server-about FAQ hook
-import { maybeAnswerServerAbout } from '../features/faq/serverAbout.js';
 
 const lastInterjectAt = new Map();
 const canInterject = (ch) => (Date.now() - (lastInterjectAt.get(ch) ?? 0)) >= INTERJECT_COOLDOWN_MS;
@@ -52,7 +49,6 @@ export async function execute(msg) {
     // Non-blocking side effects
     Promise.allSettled([
       collectImage(msg),
-      touchUserMemory(msg.guild?.id, msg.author.id, msg.author.username),
     ]);
 
     const raw = (msg.content ?? '').trim();
@@ -68,9 +64,6 @@ export async function execute(msg) {
       });
       return;
     }
-
-    // 🔎 EARLY: FAQ catcher for “what is this server about?”
-    if (await maybeAnswerServerAbout(msg)) return;
 
     // Tone ON only when targeted
     const targeted = inDM || mentioned || repliedTo;

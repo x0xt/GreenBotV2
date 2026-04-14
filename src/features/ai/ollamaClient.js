@@ -13,7 +13,7 @@ export async function ollamaChat(text) {
         messages: [{ role: 'user', content: text }],
         stream: false,
         keep_alive: '30m',
-        options: { num_predict: 192 }
+        options: { num_predict: 320 }
       }),
       signal: controller.signal
     });

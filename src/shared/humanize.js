@@ -8,7 +8,7 @@ function removeBotSelfRefs(text) {
     .replace(/\b(as\s+an?\s+ai|as\s+an?\s+AI)\b.*?(?=[\.\!\?]|$)/gi, '')
     .replace(/\b(i'?m|i am)\s+(an?\s+)?bot\b.*?(?=[\.\!\?]|$)/gi, '')
     .replace(/\b(as a language model)\b.*?(?=[\.\!\?]|$)/gi, '')
-    .replace(/\b(i cannot|i can't)\s+assist\s+with\s+that\s+as\s+an?\s+ai\b/gi, "I can't help with that")
+    .replace(/\b(i cannot|i can't)\s+assist\s+with\s+that\s+as\s+an?\s+ai\b/gi, '')
     .replace(/\s{2,}/g, ' ');
 }
 

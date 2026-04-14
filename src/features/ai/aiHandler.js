@@ -1,19 +1,16 @@
 import { humanize } from "../../shared/humanize.js";
+import { logChat } from '../../lib/chatLogger.js';
 // file: src/features/ai/aiHandler.js
 import { EmbedBuilder } from 'discord.js';
 import { schedule, breakerOpen, recordFailure } from './backpressure.js';
 import { ollamaChat } from './ollamaClient.js';
 import { shapeWithSeed } from './tone.js';
-import { appendUserMemory } from '../user/userMemory.js';
+import { appendUserMemory, readUserMemory } from '../user/userMemory.js';
 import { getRandomImage } from '../media/imagePool.js';
 import { generateImage } from './imageGenerator.js';
 import { safe } from '../../shared/safe.js';
-import { IMAGE_GEN_PHRASES, SPAMMER_INSULTS, MERGE_WINDOW_MS, INTERJECT_PROB, IMAGE_ATTEMPT_PROB, TIMEOUT_INSULTS } from '../../shared/constants.js';
+import { IMAGE_GEN_PHRASES, SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
-
-// tone engine (used only when opts.useTone === true)
-import { pickTone, tonePack } from './toneStyles.js';
-import { setToneForMessage, getToneForMessage } from '../../shared/toneContext.js';
 
 const lastMsgBuffer = new Map();
 
@@ -35,10 +32,7 @@ function coalesceUserMessage(userId, newContent) {
 
 function shouldWarnQueue() { return true; }
 
-// opts: { useTone?: boolean }
 export async function handleAiChat(msg, interjecting, opts = {}) {
-  const useTone = Boolean(opts.useTone);
-
   // merge bursts from same user to reduce spam into the model
   const mergedContent = await coalesceUserMessage(msg.author.id, (msg.content || '').trim());
 
@@ -53,36 +47,16 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     .trim();
 
   const base = content.slice(0, 1400);
-  const userMessage = base || '(The user sent an empty or nonsensical message. Mock them for it.)';
+  const userMessage = base || '(empty message)';
 
-  let prompt;
+  const pastSnippet = await readUserMemory(msg.guild?.id ?? null, msg.author.id).catch(() => '');
+  const memBlock = pastSnippet
+    ? `[things this person has said before — use it against them if you feel like it]\n${pastSnippet}\n\n`
+    : '';
 
-  if (useTone) {
-    // Tone applies only for ping/reply/DM
-    const seed = `${msg.channelId}:${msg.author.id}:${msg.id}`;
-    const chosenTone = getToneForMessage(msg.id) || pickTone(seed);
-    setToneForMessage(msg.id, chosenTone);
-    const tp = tonePack(chosenTone);
-
-    const MAX_CHARS = Number(process.env.MAX_REPLY_CHARS ?? 220);
-
-    const SYSTEM = [
-      tp.sysline,
-      'Stay strictly on-topic to the latest user message.',
-      `Keep answers concise (under ${MAX_CHARS} characters).`,
-      'Do not insult unless explicitly interjecting.',
-    ].join(' ');
-
-    prompt = interjecting
-      ? `[${tp.id} vibe: interrupt with a one-liner on this topic]\n"${userMessage}"`
-      : `${SYSTEM}\nUser's new message: "${userMessage}"`;
-
-  } else {
-    // Original behavior (ambient): no tone system prompt
-    prompt = interjecting
-      ? `[Interrupt with a hostile, cynical one-liner about this topic]\n"${userMessage}"`
-      : `User's new message: "${userMessage}"`;
-  }
+  const prompt = interjecting
+    ? `${memBlock}[someone just posted this, butt in with something]\n"${userMessage}"`
+    : `${memBlock}${userMessage}`;
 
   if (!breakerOpen() && shouldWarnQueue(msg.author.id)) {
     // typing indicator (best-effort)
@@ -93,7 +67,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   const reply = await schedule(msg.author.id, async () => {
     try {
       const raw = await ollamaChat(prompt);
-      return shapeWithSeed(raw, 240, `${msg.id}:${msg.author.id}`);
+      return shapeWithSeed(raw, 900, `${msg.id}:${msg.author.id}`);
     } catch (e) {
       console.error('OLLAMA ERR:', e);
       recordFailure();
@@ -109,10 +83,10 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     return 'brain lag — try again in a sec.';
   });
 
-  // Persist memory (non-blocking)
-  if (msg.guild) {
-    appendUserMemory(msg.guild.id, msg.author.id, base || mergedContent).catch(() => {});
-  }
+  // Persist memory + log (non-blocking)
+  const guildId = msg.guild?.id ?? null;
+  appendUserMemory(guildId, msg.author.id, base || mergedContent).catch(() => {});
+  logChat(guildId, msg.author.id, msg.author.username, userMessage, reply);
 
   // Assemble final reply message; include occasional images during interjections
   const options = {
@@ -123,39 +97,9 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   let imageUrls = null;
 
-  if (interjecting) {
-    // 15% chance to attempt an image
-    if (Math.random() < IMAGE_ATTEMPT_PROB) {
-      if (Math.random() < 0.99) {
-        const img = await getRandomImage().catch(() => null);
-        if (img) imageUrls = [img];
-        if (useTone) {
-          // tone-based lead-in
-          const toneId = getToneForMessage(msg.id);
-          if (toneId) {
-            const tp = tonePack(toneId);
-            options.content = `${tp.imageLead()}\n\n${safe(options.content)}`;
-          }
-        } else {
-          // legacy phrase
-          const chosen = IMAGE_GEN_PHRASES[Math.floor(Math.random() * IMAGE_GEN_PHRASES.length)];
-          options.content = `${chosen}\n\n${safe(options.content)}`;
-        }
-      } else {
-        if (useTone) {
-          const toneId = getToneForMessage(msg.id);
-          if (toneId) {
-            const tp = tonePack(toneId);
-            options.content = `${tp.imageLead()}\n\n${safe(options.content)}`;
-          }
-        } else {
-          const chosen = IMAGE_GEN_PHRASES[Math.floor(Math.random() * IMAGE_GEN_PHRASES.length)];
-          options.content = `${chosen}\n\n${safe(options.content)}`;
-        }
-        const generated = await generateImage(userMessage).catch(() => null);
-        if (generated?.length) imageUrls = generated;
-      }
-    }
+  if (interjecting && Math.random() < IMAGE_ATTEMPT_PROB) {
+    const img = await getRandomImage().catch(() => null);
+    if (img) imageUrls = [img];
   }
 
   if (imageUrls?.length) {

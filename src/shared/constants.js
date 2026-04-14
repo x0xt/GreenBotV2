@@ -79,13 +79,13 @@ export const MERGE_WINDOW_MS = 250;
 
 // --- Interject Settings ---
 export const INTERJECT_ENABLED = true;
-export const INTERJECT_PROB = 0.05;
-export const INTERJECT_COOLDOWN_MS = 7_200_000;
+export const INTERJECT_PROB = 0.12;
+export const INTERJECT_COOLDOWN_MS = 1_800_000;
 
 // --- Memory Settings ---
 export const MEMORY_ROOT = path.resolve('./memory');
 export const MAX_LINES = 300;
-export const SNIPPET_LINES = 40;
+export const SNIPPET_LINES = 15;
 
 // --- Error Messages ---
 export const TIMEOUT_INSULTS = [
