@@ -33,6 +33,34 @@ function coalesceUserMessage(userId, newContent) {
 
 function shouldWarnQueue() { return true; }
 
+const MIRROR_INSULTS = [
+  'SHUT UP', 'GO FUCK YOURSELF', 'IDIOT', 'MORON', 'KILL YOUR WIFI',
+  'NOBODY CARES', 'GET HELP', 'TOUCH GRASS', 'I HATE YOU', 'STOP',
+  'WHAT IS WRONG WITH YOU', 'LOSER', 'YOUR MOM', 'PATHETIC', 'DIE MAD'
+];
+
+function detectSpamWord(text) {
+  const words = text.trim().split(/\s+/);
+  if (words.length < 8) return null;
+  const freq = {};
+  for (const w of words) freq[w.toLowerCase()] = (freq[w.toLowerCase()] || 0) + 1;
+  const [topWord, topCount] = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
+  return topCount / words.length >= 0.75 ? topWord : null;
+}
+
+function mirrorSpam(word) {
+  const count = Math.floor(Math.random() * 150) + 80;
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    if (Math.random() < 0.08) {
+      out.push(MIRROR_INSULTS[Math.floor(Math.random() * MIRROR_INSULTS.length)]);
+    } else {
+      out.push(Math.random() < 0.5 ? word.toUpperCase() : word.toLowerCase());
+    }
+  }
+  return out.join(' ').slice(0, 1900);
+}
+
 export async function handleAiChat(msg, interjecting, opts = {}) {
   // merge bursts from same user to reduce spam into the model
   const mergedContent = await coalesceUserMessage(msg.author.id, (msg.content || '').trim());
@@ -49,6 +77,16 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   const base = content.slice(0, 1400);
   const userMessage = base || '(empty message)';
+
+  // Spam mirror — detect repeated single word and go feral back
+  const spamWord = detectSpamWord(base);
+  if (spamWord) {
+    const mirrored = mirrorSpam(spamWord);
+    await msg.reply({ content: safe(mirrored), allowedMentions: { parse: [], repliedUser: false } }).catch(() => {});
+    const guildIdSpam = msg.guild?.id ?? null;
+    if (!msg.author.bot) logChat(guildIdSpam, msg.author.id, msg.author.username, userMessage, mirrored);
+    return;
+  }
 
   const pastSnippet = await readUserMemory(msg.guild?.id ?? null, msg.author.id).catch(() => '');
   const memBlock = pastSnippet

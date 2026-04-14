@@ -69,7 +69,7 @@ export const IMAGE_GEN_PHRASES = [
 // --- Anti-Spam / Backpressure Knobs ---
 export const PER_USER_MAX_INFLIGHT = 1;
 export const PER_USER_MAX_QUEUE = 10;
-export const GLOBAL_MAX_INFLIGHT = 1;
+export const GLOBAL_MAX_INFLIGHT = 3;
 export const GLOBAL_MAX_QUEUE = 64;
 export const REQ_TIMEOUT_MS = 180_000;
 export const BREAKER_WINDOW_MS = 30_000;
