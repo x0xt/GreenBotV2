@@ -23,8 +23,16 @@ function spongeCaseSeeded(text, seed) {
   return out;
 }
 
+// Strip model self-introduction habits ("greenbot here", "greenbot:", etc.)
+function stripSelfIntro(text) {
+  return text
+    .replace(/^greenbot\s+here[,.\s]*/i, '')
+    .replace(/^greenbot[:\s]+/i, '')
+    .trim();
+}
+
 export function shapeWithSeed(text, max = 900, seedStr) {
-  let t = (text || '').replace(/\s+/g, ' ').trim();
+  let t = stripSelfIntro((text || '').replace(/\s+/g, ' ').trim());
   const r = rnd01(hash32(seedStr));
 
   if (r < 0.35) { t = t.toUpperCase(); }

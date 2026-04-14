@@ -11,7 +11,7 @@ import { isReplyToBot } from '../shared/isReplyToBot.js';
 import { cooldownOk, roll } from '../shared/probability.js';
 import { getRandomImage } from '../features/media/imagePool.js';
 
-import { MYSTIQUE_STRICT, MYSTIQUE_EVASIVE_LINES } from '../shared/constants.js';
+import { MYSTIQUE_EVASIVE_LINES } from '../shared/constants.js';
 
 
 
@@ -39,24 +39,6 @@ export async function execute(msg) {
         return;
       }
     }
-  // direct Q: dodge instead of admitting/denying (mystique-evasive)
-  try {
-    const txt = String(msg.content || "");
-    if (MYSTIQUE_STRICT && /(\bare you (a )?bot\b|\bare you human\b)/i.test(txt)) {
-      const lines = Array.isArray(MYSTIQUE_EVASIVE_LINES) && MYSTIQUE_EVASIVE_LINES.length ? MYSTIQUE_EVASIVE_LINES : ["who’s asking?"];
-      const pick = lines[Math.floor(Math.random() * lines.length)];
-      void msg.reply(pick);
-      return;
-    }
-  } catch {}
-  // direct Q: are you a bot?
-  try {
-    const txt = String(msg.content || "");
-    if (/(?:\bare you (a )?bot\b|\bare you human\b)/i.test(txt)) {
-      void msg.reply("BOT? LOL. no. If i was a bOt explain how i sneed your momlol loo ol");
-      return;
-    }
-  } catch {}
 
     // Non-blocking side effects
     Promise.allSettled([
@@ -80,8 +62,18 @@ export async function execute(msg) {
     // Tone ON only when targeted
     const targeted = inDM || mentioned || repliedTo;
 
-    // Beepy gets picked on randomly — 35% chance greenbot fires back unprompted
-    if (isBot && msg.author.id === BEEPY_ID && !targeted && Math.random() < 0.35) {
+    // "are you a bot" dodge — only fires when the message is directed at greenbot
+    if (targeted) {
+      const txt = String(msg.content || '');
+      if (/\bare you (a )?bot\b|\bare you (a )?human\b/i.test(txt)) {
+        const lines = Array.isArray(MYSTIQUE_EVASIVE_LINES) && MYSTIQUE_EVASIVE_LINES.length ? MYSTIQUE_EVASIVE_LINES : ["who's asking?"];
+        void msg.reply(lines[Math.floor(Math.random() * lines.length)]);
+        return;
+      }
+    }
+
+    // Beepy gets picked on randomly — 20% chance greenbot fires back unprompted
+    if (isBot && msg.author.id === BEEPY_ID && !targeted && Math.random() < 0.20) {
       await handleAiChat(msg, false, { useTone: true });
       return;
     }

@@ -20,13 +20,16 @@ export async function execute(interaction) {
     const file = userFilePath(interaction.guild?.id, interaction.user.id);
 
     if (subCommand === 'show') {
+        await interaction.deferReply({ ephemeral: true });
         try {
             await ensureDir(path.dirname(file));
             const memoryContent = await readUserMemory(interaction.guild?.id, interaction.user.id);
-            const content = memoryContent ? `\`\`\`\n${memoryContent}\n\`\`\`` : 'no notes.';
-            return interaction.reply({ content, ephemeral: true });
+            if (!memoryContent) return interaction.editReply('no notes.');
+            // Fit within Discord's 2000 char limit (account for code block overhead)
+            const truncated = memoryContent.slice(-1800);
+            return interaction.editReply(`\`\`\`\n${truncated}\n\`\`\``);
         } catch {
-            return interaction.reply({ content: 'no notes.', ephemeral: true });
+            return interaction.editReply('no notes.');
         }
     }
 

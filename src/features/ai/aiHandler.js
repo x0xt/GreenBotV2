@@ -78,6 +78,18 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
         { role: 'user', content: `${memBlock}${userMessage}` },
       ];
 
+  // 4% chance to just not be bothered — fires before hitting the model
+  const DISMISSALS = ['k.', 'lol', 'ok', 'cool', 'k', 'whatever', 'yeah', 'no', 'lmao', 'sure'];
+  if (!interjecting && Math.random() < 0.04) {
+    const dismissal = DISMISSALS[Math.floor(Math.random() * DISMISSALS.length)];
+    await msg.reply({ content: dismissal, allowedMentions: { parse: [], repliedUser: false } }).catch(() => {});
+    if (!msg.author.bot) logChat(msg.guild?.id ?? null, msg.author.id, msg.author.username, userMessage, dismissal);
+    pushHistory(channelId, 'user', userMessage);
+    pushHistory(channelId, 'assistant', dismissal);
+    incrementDepth(msg.author.id);
+    return;
+  }
+
   if (!breakerOpen() && shouldWarnQueue(msg.author.id)) {
     // typing indicator (best-effort)
     msg.channel.sendTyping().catch(() => {});

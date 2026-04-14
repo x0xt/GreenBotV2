@@ -3,33 +3,33 @@ import { OLLAMA_HOST, MODEL, REQ_TIMEOUT_MS } from '../../shared/constants.js';
 function randomTokenBudget(depth = 0) {
   const r = Math.random();
   if (depth >= 50) return -1;                       // 50+ exchanges: no limit, full chaos
-  if (depth >= 15) {                                // 15+ exchanges: mostly long, occasional rant
-    if (r < 0.05) return Math.floor(Math.random() * 30) + 20;
-    if (r < 0.20) return Math.floor(Math.random() * 80) + 60;
-    return Math.floor(Math.random() * 200) + 280;   // 280-480 tokens — walls of text
+  if (depth >= 15) {                                // 15+ exchanges: mostly long
+    if (r < 0.10) return Math.floor(Math.random() * 40) + 60;   // short: 60-100
+    if (r < 0.30) return Math.floor(Math.random() * 80) + 100;  // medium: 100-180
+    return Math.floor(Math.random() * 120) + 180;                // long: 180-300
   }
   if (depth >= 10) {                                // 10-14 exchanges: long dominant
-    if (r < 0.10) return Math.floor(Math.random() * 30) + 20;
-    if (r < 0.35) return Math.floor(Math.random() * 80) + 60;
-    return Math.floor(Math.random() * 150) + 200;   // 200-350 tokens
+    if (r < 0.15) return Math.floor(Math.random() * 40) + 60;   // short: 60-100
+    if (r < 0.45) return Math.floor(Math.random() * 80) + 100;  // medium: 100-180
+    return Math.floor(Math.random() * 100) + 160;                // long: 160-260
   }
   if (depth >= 8) {                                 // 8-9 exchanges: even split
-    if (r < 0.25) return Math.floor(Math.random() * 30) + 20;
-    if (r < 0.55) return Math.floor(Math.random() * 80) + 60;
-    return Math.floor(Math.random() * 130) + 160;   // 160-290 tokens
+    if (r < 0.30) return Math.floor(Math.random() * 40) + 60;   // short: 60-100
+    if (r < 0.65) return Math.floor(Math.random() * 70) + 90;   // medium: 90-160
+    return Math.floor(Math.random() * 80) + 140;                 // long: 140-220
   }
-  // 0-7 exchanges: short/medium heavy
-  if (r < 0.55) return Math.floor(Math.random() * 30) + 20;             // short: 20-50
-  if (r < 0.90) return Math.floor(Math.random() * 80) + 60;             // medium: 60-140
-  return Math.floor(Math.random() * 100) + 150;                          // long: 150-250
+  // 0-7 exchanges: short/medium heavy, nothing below 60 tokens (no more cut-offs)
+  if (r < 0.55) return Math.floor(Math.random() * 40) + 60;     // short: 60-100
+  if (r < 0.90) return Math.floor(Math.random() * 70) + 90;     // medium: 90-160
+  return Math.floor(Math.random() * 80) + 150;                   // long: 150-230
 }
 
 function tempForDepth(depth = 0) {
-  if (depth >= 50) return 1.9;   // deeply unhinged, barely coherent
-  if (depth >= 35) return 1.75;
-  if (depth >= 20) return 1.6;
-  if (depth >= 10) return 1.5;
-  return 1.4;                    // base
+  if (depth >= 50) return 1.4;   // deeply unhinged but still legible
+  if (depth >= 35) return 1.25;
+  if (depth >= 20) return 1.15;
+  if (depth >= 10) return 1.05;
+  return 0.9;                    // base — coherent but still unhinged
 }
 
 // This function already uses AbortController for timeouts, it's very robust.
