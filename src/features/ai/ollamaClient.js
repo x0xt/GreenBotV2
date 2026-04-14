@@ -1,14 +1,39 @@
 import { OLLAMA_HOST, MODEL, REQ_TIMEOUT_MS } from '../../shared/constants.js';
 
-function randomTokenBudget() {
+function randomTokenBudget(depth = 0) {
   const r = Math.random();
-  if (r < 0.35) return Math.floor(Math.random() * 30) + 30;   // 35%: 30-60 tokens — one-liner
-  if (r < 0.65) return Math.floor(Math.random() * 80) + 80;   // 30%: 80-160 tokens — medium
-  return Math.floor(Math.random() * 120) + 180;                // 35%: 180-300 tokens — full rant
+  if (depth >= 50) return -1;                       // 50+ exchanges: no limit, full chaos
+  if (depth >= 15) {                                // 15+ exchanges: mostly long, occasional rant
+    if (r < 0.05) return Math.floor(Math.random() * 30) + 20;
+    if (r < 0.20) return Math.floor(Math.random() * 80) + 60;
+    return Math.floor(Math.random() * 200) + 280;   // 280-480 tokens — walls of text
+  }
+  if (depth >= 10) {                                // 10-14 exchanges: long dominant
+    if (r < 0.10) return Math.floor(Math.random() * 30) + 20;
+    if (r < 0.35) return Math.floor(Math.random() * 80) + 60;
+    return Math.floor(Math.random() * 150) + 200;   // 200-350 tokens
+  }
+  if (depth >= 8) {                                 // 8-9 exchanges: even split
+    if (r < 0.25) return Math.floor(Math.random() * 30) + 20;
+    if (r < 0.55) return Math.floor(Math.random() * 80) + 60;
+    return Math.floor(Math.random() * 130) + 160;   // 160-290 tokens
+  }
+  // 0-7 exchanges: short/medium heavy
+  if (r < 0.55) return Math.floor(Math.random() * 30) + 20;             // short: 20-50
+  if (r < 0.90) return Math.floor(Math.random() * 80) + 60;             // medium: 60-140
+  return Math.floor(Math.random() * 100) + 150;                          // long: 150-250
+}
+
+function tempForDepth(depth = 0) {
+  if (depth >= 50) return 1.9;   // deeply unhinged, barely coherent
+  if (depth >= 35) return 1.75;
+  if (depth >= 20) return 1.6;
+  if (depth >= 10) return 1.5;
+  return 1.4;                    // base
 }
 
 // This function already uses AbortController for timeouts, it's very robust.
-export async function ollamaChat(messages) {
+export async function ollamaChat(messages, depth = 0) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), REQ_TIMEOUT_MS);
   try {
@@ -20,7 +45,7 @@ export async function ollamaChat(messages) {
         messages,
         stream: false,
         keep_alive: '30m',
-        options: { num_predict: randomTokenBudget() }
+        options: { num_predict: randomTokenBudget(depth), temperature: tempForDepth(depth) }
       }),
       signal: controller.signal
     });

@@ -3,6 +3,8 @@ import { Events, ChannelType, EmbedBuilder } from 'discord.js';
 import { handleAiChat } from '../features/ai/aiHandler.js';
 import { collectImage } from '../features/media/imageCollector.js';
 import { INTERJECT_ENABLED, INTERJECT_PROB, INTERJECT_COOLDOWN_MS, IMAGE_GEN_PHRASES, BEEPY_ID } from '../shared/constants.js';
+import { recordMessage, checkRage } from '../features/ai/spamTracker.js';
+import { safe } from '../shared/safe.js';
 
 import { isNonTextPayload } from '../shared/isNonTextPayload.js';
 import { isReplyToBot } from '../shared/isReplyToBot.js';
@@ -12,6 +14,22 @@ import { generateImage } from '../features/ai/imageGenerator.js';
 
 import { MYSTIQUE_STRICT, MYSTIQUE_EVASIVE_LINES } from "../shared/constants.js";
 
+
+const MIRROR_INSULTS = [
+  'SHUT UP', 'GO FUCK YOURSELF', 'IDIOT', 'MORON', 'KILL YOUR WIFI',
+  'NOBODY CARES', 'GET HELP', 'TOUCH GRASS', 'I HATE YOU', 'STOP',
+  'WHAT IS WRONG WITH YOU', 'LOSER', 'YOUR MOM', 'PATHETIC', 'DIE MAD'
+];
+
+function mirrorSpam(word) {
+  const count = Math.floor(Math.random() * 150) + 80;
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    if (Math.random() < 0.08) out.push(MIRROR_INSULTS[Math.floor(Math.random() * MIRROR_INSULTS.length)]);
+    else out.push(Math.random() < 0.5 ? word.toUpperCase() : word.toLowerCase());
+  }
+  return out.join(' ').slice(0, 1900);
+}
 
 const lastInterjectAt = new Map();
 const canInterject = (ch) => (Date.now() - (lastInterjectAt.get(ch) ?? 0)) >= INTERJECT_COOLDOWN_MS;
@@ -28,6 +46,15 @@ export async function execute(msg) {
   try {
     if (msg.author?.id === msg.client.user?.id) return; // never reply to itself
     const isBot = msg.author?.bot ?? false;
+
+    // Track spam buildup for every non-bot message
+    if (!isBot && msg.guild) {
+      const { shouldMirrorUnprompted, word } = recordMessage(msg.channel.id, msg.author.id, msg.content ?? '');
+      if (shouldMirrorUnprompted && word) {
+        await msg.channel.send(safe(mirrorSpam(word))).catch(() => {});
+        return;
+      }
+    }
   // direct Q: dodge instead of admitting/denying (mystique-evasive)
   try {
     const txt = String(msg.content || "");
