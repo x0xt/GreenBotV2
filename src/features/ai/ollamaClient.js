@@ -2,26 +2,21 @@ import { OLLAMA_HOST, MODEL, REQ_TIMEOUT_MS } from '../../shared/constants.js';
 
 function randomTokenBudget(depth = 0) {
   const r = Math.random();
-  if (depth >= 50) return -1;                       // 50+ exchanges: no limit, full chaos
-  if (depth >= 15) {                                // 15+ exchanges: mostly long
-    if (r < 0.10) return Math.floor(Math.random() * 40) + 60;   // short: 60-100
-    if (r < 0.30) return Math.floor(Math.random() * 80) + 100;  // medium: 100-180
-    return Math.floor(Math.random() * 120) + 180;                // long: 180-300
+  if (depth >= 50) return -1;                      // 50+: no limit, full chaos
+  if (depth >= 20) {                               // 20+: getting ranty
+    if (r < 0.20) return Math.floor(Math.random() * 20) + 15;   // short:  15-35
+    if (r < 0.55) return Math.floor(Math.random() * 40) + 40;   // medium: 40-80
+    return Math.floor(Math.random() * 80) + 90;                  // long:   90-170
   }
-  if (depth >= 10) {                                // 10-14 exchanges: long dominant
-    if (r < 0.15) return Math.floor(Math.random() * 40) + 60;   // short: 60-100
-    if (r < 0.45) return Math.floor(Math.random() * 80) + 100;  // medium: 100-180
-    return Math.floor(Math.random() * 100) + 160;                // long: 160-260
+  if (depth >= 10) {                               // 10-19: warming up
+    if (r < 0.35) return Math.floor(Math.random() * 20) + 15;   // short:  15-35
+    if (r < 0.75) return Math.floor(Math.random() * 35) + 35;   // medium: 35-70
+    return Math.floor(Math.random() * 60) + 75;                  // long:   75-135
   }
-  if (depth >= 8) {                                 // 8-9 exchanges: even split
-    if (r < 0.30) return Math.floor(Math.random() * 40) + 60;   // short: 60-100
-    if (r < 0.65) return Math.floor(Math.random() * 70) + 90;   // medium: 90-160
-    return Math.floor(Math.random() * 80) + 140;                 // long: 140-220
-  }
-  // 0-7 exchanges: short and punchy
-  if (r < 0.55) return Math.floor(Math.random() * 30) + 35;     // short: 35-65
-  if (r < 0.90) return Math.floor(Math.random() * 50) + 65;     // medium: 65-115
-  return Math.floor(Math.random() * 60) + 120;                   // long: 120-180
+  // 0-9: normal person length — short and snappy
+  if (r < 0.60) return Math.floor(Math.random() * 15) + 10;     // short:  10-25
+  if (r < 0.90) return Math.floor(Math.random() * 25) + 25;     // medium: 25-50
+  return Math.floor(Math.random() * 35) + 55;                    // long:   55-90
 }
 
 function tempForDepth(depth = 0) {
