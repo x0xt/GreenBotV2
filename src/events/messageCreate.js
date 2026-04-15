@@ -72,8 +72,8 @@ export async function execute(msg) {
       }
     }
 
-    // Beepy gets picked on randomly — 20% chance greenbot fires back unprompted
-    if (isBot && msg.author.id === BEEPY_ID && !targeted && Math.random() < 0.20) {
+    // Beepy gets picked on randomly — 10% chance greenbot fires back unprompted
+    if (isBot && msg.author.id === BEEPY_ID && !targeted && Math.random() < 0.10) {
       await handleAiChat(msg, false, { useTone: true });
       return;
     }
