@@ -62,6 +62,9 @@ export async function execute(msg) {
     // Tone ON only when targeted
     const targeted = inDM || mentioned || repliedTo;
 
+    // if only targeted via reply (not a direct mention or DM), 40% chance to just ignore it
+    if (repliedTo && !mentioned && !inDM && Math.random() < 0.40) return;
+
     // "are you a bot" dodge — only fires when the message is directed at greenbot
     if (targeted) {
       const txt = String(msg.content || '');
