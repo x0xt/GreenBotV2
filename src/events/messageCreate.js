@@ -62,8 +62,8 @@ export async function execute(msg) {
     // Tone ON only when targeted
     const targeted = inDM || mentioned || repliedTo;
 
-    // if only targeted via reply (not a direct mention or DM), 40% chance to just ignore it
-    if (repliedTo && !mentioned && !inDM && Math.random() < 0.40) return;
+    // direct reply but not a mention/DM — 10% chance to just ghost them
+    if (repliedTo && !mentioned && !inDM && Math.random() < 0.10) return;
 
     // "are you a bot" dodge — only fires when the message is directed at greenbot
     if (targeted) {
@@ -86,6 +86,11 @@ export async function execute(msg) {
     if (!targeted && !isBot && INTERJECT_ENABLED && isNonTextPayload(msg) && msg.guild && canInterject(msg.channel.id) && Math.random() < INTERJECT_PROB) {
       interjecting = true;
       markInterject(msg.channel.id);
+    }
+
+    // Unprompted summon — tiny chance to butt into any text message
+    if (!targeted && !interjecting && !isBot && msg.guild && raw.length > 0 && Math.random() < 0.03) {
+      interjecting = true;
     }
 
     if (targeted || interjecting) {
