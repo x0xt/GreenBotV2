@@ -5,6 +5,7 @@ import { collectImage } from '../features/media/imageCollector.js';
 import { INTERJECT_ENABLED, INTERJECT_PROB, INTERJECT_COOLDOWN_MS, BEEPY_ID } from '../shared/constants.js';
 import { recordMessage, mirrorSpam } from '../features/ai/spamTracker.js';
 import { safe } from '../shared/safe.js';
+import { logChat } from '../lib/chatLogger.js';
 
 import { isNonTextPayload } from '../shared/isNonTextPayload.js';
 import { isReplyToBot } from '../shared/isReplyToBot.js';
@@ -35,7 +36,9 @@ export async function execute(msg) {
     if (!isBot && msg.guild) {
       const { shouldMirrorUnprompted, word } = recordMessage(msg.channel.id, msg.author.id, msg.content ?? '');
       if (shouldMirrorUnprompted && word) {
-        await msg.channel.send(safe(mirrorSpam(word))).catch(() => {});
+        const mirrored = mirrorSpam(word);
+        await msg.channel.send(safe(mirrored)).catch(() => {});
+        logChat(msg.guild?.id ?? null, msg.author.id, msg.author.username, msg.content ?? '', mirrored, { channelId: msg.channel.id, type: 'spam-mirror' }).catch(() => {});
         return;
       }
     }
@@ -70,7 +73,9 @@ export async function execute(msg) {
       const txt = String(msg.content || '');
       if (/\bare you (a )?bot\b|\bare you (a )?human\b/i.test(txt)) {
         const lines = Array.isArray(MYSTIQUE_EVASIVE_LINES) && MYSTIQUE_EVASIVE_LINES.length ? MYSTIQUE_EVASIVE_LINES : ["who's asking?"];
-        void msg.reply(lines[Math.floor(Math.random() * lines.length)]);
+        const evasion = lines[Math.floor(Math.random() * lines.length)];
+        void msg.reply(evasion);
+        logChat(msg.guild?.id ?? null, msg.author.id, msg.author.username, txt, evasion, { channelId: msg.channel.id, type: 'bot-dodge' }).catch(() => {});
         return;
       }
     }

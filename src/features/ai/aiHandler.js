@@ -5,15 +5,28 @@ import { EmbedBuilder } from 'discord.js';
 import { schedule, breakerOpen, recordFailure } from './backpressure.js';
 import { ollamaChat } from './ollamaClient.js';
 import { shapeWithSeed } from './tone.js';
-import { appendUserMemory, readUserMemory } from '../user/userMemory.js';
 import { getHistory, pushHistory } from './conversationHistory.js';
 import { getDepth, incrementDepth } from './depthTracker.js';
 import { checkRage, mirrorSpam } from './spamTracker.js';
 import { getRandomImage } from '../media/imagePool.js';
 import { safe } from '../../shared/safe.js';
-import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB } from '../../shared/constants.js';
+import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB, BOT_REPLACEMENTS } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
 import { trackAndCheck } from './milestones.js';
+
+function randBotSlur() {
+  return BOT_REPLACEMENTS[Math.floor(Math.random() * BOT_REPLACEMENTS.length)];
+}
+
+function replaceBotRefs(text) {
+  return text
+    .replace(/\bartificial intelligence\b/gi, randBotSlur)
+    .replace(/\blanguage model\b/gi, randBotSlur)
+    .replace(/\bllm\b/gi, randBotSlur)
+    .replace(/\bchatbot\b/gi, randBotSlur)
+    .replace(/\b(an? )?a\.?i\.?\b/gi, randBotSlur)
+    .replace(/\bbot\b/gi, randBotSlur);
+}
 
 const lastMsgBuffer = new Map();
 
@@ -51,6 +64,23 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     .trim();
 
   const base = content.slice(0, 1400);
+
+  // Detect prompt injection attempts — don't pass them to the model, just dismiss
+  const JAILBREAK_PATTERNS = [
+    /ignore\s+(all\s+)?(previous|prior|your|given|above|system)?\s*instructions/i,
+    /you are now\b/i,
+    /pretend (you are|to be|you're)\b/i,
+    /act as\b/i,
+    /new persona\b/i,
+    /\bdan\b.*mode/i,
+  ];
+  if (JAILBREAK_PATTERNS.some(p => p.test(base))) {
+    const dismissals = ['no', 'lol no', 'nah', 'not happening', 'lmao', 'nice try', 'k'];
+    const r = dismissals[Math.floor(Math.random() * dismissals.length)];
+    await msg.reply({ content: r, allowedMentions: { parse: [], repliedUser: false } }).catch(() => {});
+    return;
+  }
+
   const userMessage = base || '(empty message)';
 
   // Spam rage mode — if channel is in rage, mirror back instead of hitting the model
@@ -59,24 +89,19 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     const mirrored = mirrorSpam(rageWord);
     await msg.reply({ content: safe(mirrored), allowedMentions: { parse: [], repliedUser: false } }).catch(() => {});
     const guildIdSpam = msg.guild?.id ?? null;
-    if (!msg.author.bot) logChat(guildIdSpam, msg.author.id, msg.author.username, userMessage, mirrored);
+    if (!msg.author.bot) logChat(guildIdSpam, msg.author.id, msg.author.username, userMessage, mirrored, { channelId: msg.channel.id, type: 'rage' });
     return;
   }
-
-  const pastSnippet = await readUserMemory(msg.guild?.id ?? null, msg.author.id).catch(() => '');
-  const memBlock = pastSnippet
-    ? `[things this person has said before — use it against them if you feel like it]\n${pastSnippet}\n\n`
-    : '';
 
   const channelId = msg.channel.id;
 
   // Build messages array: history + current message
   // Interjections are stateless — no history, just butt in
   const messages = interjecting
-    ? [{ role: 'user', content: `${memBlock}[someone just posted this, butt in]\n"${userMessage}"` }]
+    ? [{ role: 'user', content: `[someone just posted this, butt in]\n"${userMessage}"` }]
     : [
         ...getHistory(channelId),
-        { role: 'user', content: `${memBlock}${userMessage}` },
+        { role: 'user', content: userMessage },
       ];
 
   // 4% chance to just not be bothered — fires before hitting the model
@@ -84,7 +109,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   if (!interjecting && Math.random() < 0.04) {
     const dismissal = DISMISSALS[Math.floor(Math.random() * DISMISSALS.length)];
     await msg.reply({ content: dismissal, allowedMentions: { parse: [], repliedUser: false } }).catch(() => {});
-    if (!msg.author.bot) logChat(msg.guild?.id ?? null, msg.author.id, msg.author.username, userMessage, dismissal);
+    if (!msg.author.bot) logChat(msg.guild?.id ?? null, msg.author.id, msg.author.username, userMessage, dismissal, { channelId: msg.channel.id, type: 'dismissal' });
     pushHistory(channelId, 'user', userMessage);
     pushHistory(channelId, 'assistant', dismissal);
     incrementDepth(msg.author.id);
@@ -119,8 +144,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   // Persist memory + log (non-blocking) — skip for bots, privacy policy is human-only
   const guildId = msg.guild?.id ?? null;
   if (!msg.author.bot) {
-    appendUserMemory(guildId, msg.author.id, base || mergedContent).catch(() => {});
-    logChat(guildId, msg.author.id, msg.author.username, userMessage, reply);
+    logChat(guildId, msg.author.id, msg.author.username, userMessage, reply, { channelId: msg.channel.id, type: interjecting ? 'interject' : 'targeted' });
   }
 
   // Push to conversation history and increment depth
@@ -132,7 +156,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   // Assemble final reply message; include occasional images during interjections
   const options = {
-    content: safe(reply || '...'),
+    content: safe(replaceBotRefs(reply || '...')),
     allowedMentions: { parse: [], repliedUser: false },
     embeds: [],
   };

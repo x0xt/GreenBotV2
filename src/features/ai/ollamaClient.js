@@ -2,29 +2,29 @@ import { OLLAMA_HOST, MODEL, REQ_TIMEOUT_MS } from '../../shared/constants.js';
 
 function randomTokenBudget(depth = 0) {
   const r = Math.random();
-  if (depth >= 50) return -1;                      // 50+: no limit, full chaos
-  if (depth >= 20) {                               // 20+: getting ranty
-    if (r < 0.20) return Math.floor(Math.random() * 20) + 15;   // short:  15-35
-    if (r < 0.55) return Math.floor(Math.random() * 40) + 40;   // medium: 40-80
-    return Math.floor(Math.random() * 80) + 90;                  // long:   90-170
+  if (depth >= 50) return Math.floor(Math.random() * 60) + 60;  // 50+: occasionally goes off, capped
+  if (depth >= 20) {                               // 20+: getting weirder
+    if (r < 0.45) return Math.floor(Math.random() * 15) + 8;    // short:  8-23
+    if (r < 0.80) return Math.floor(Math.random() * 30) + 25;   // medium: 25-55
+    return Math.floor(Math.random() * 40) + 55;                  // long:   55-95
   }
   if (depth >= 10) {                               // 10-19: warming up
-    if (r < 0.35) return Math.floor(Math.random() * 20) + 15;   // short:  15-35
-    if (r < 0.75) return Math.floor(Math.random() * 35) + 35;   // medium: 35-70
-    return Math.floor(Math.random() * 60) + 75;                  // long:   75-135
+    if (r < 0.55) return Math.floor(Math.random() * 15) + 8;    // short:  8-23
+    if (r < 0.88) return Math.floor(Math.random() * 25) + 25;   // medium: 25-50
+    return Math.floor(Math.random() * 30) + 50;                  // long:   50-80
   }
-  // 0-9: normal person length — short and snappy
-  if (r < 0.60) return Math.floor(Math.random() * 15) + 10;     // short:  10-25
-  if (r < 0.90) return Math.floor(Math.random() * 25) + 25;     // medium: 25-50
-  return Math.floor(Math.random() * 35) + 55;                    // long:   55-90
+  // 0-9: short and weird by default
+  if (r < 0.70) return Math.floor(Math.random() * 12) + 20;     // short:  20-32
+  if (r < 0.93) return Math.floor(Math.random() * 20) + 33;     // medium: 33-53
+  return Math.floor(Math.random() * 20) + 54;                    // long:   54-74
 }
 
 function tempForDepth(depth = 0) {
-  if (depth >= 50) return 1.9;   // full word salad, barely coherent
-  if (depth >= 35) return 1.6;   // losing it
-  if (depth >= 20) return 1.3;   // noticeably off
-  if (depth >= 10) return 1.1;   // slight weirdness creeping in
-  return 1.05;                   // punchy and mean, not a reddit essay
+  if (depth >= 50) return 1.4;   // noticeably weird but still words
+  if (depth >= 35) return 1.25;  // getting strange
+  if (depth >= 20) return 1.15;  // slight drift
+  if (depth >= 10) return 1.05;  // barely perceptible
+  return 0.95;                   // sharp and coherent
 }
 
 // This function already uses AbortController for timeouts, it's very robust.

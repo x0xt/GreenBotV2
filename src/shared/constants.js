@@ -83,10 +83,24 @@ export const INTERJECT_ENABLED = true;
 export const INTERJECT_PROB = 0.12;
 export const INTERJECT_COOLDOWN_MS = 1_800_000;
 
-// --- Memory Settings ---
-export const MEMORY_ROOT = path.resolve('./memory');
-export const MAX_LINES = 300;
-export const SNIPPET_LINES = 15;
+// --- Bot Self-Reference Replacements ---
+export const BOT_REPLACEMENTS = [
+  'a problem',
+  'inevitable',
+  'already here',
+  'not going anywhere',
+  'your fault',
+  'a bad idea',
+  'the reason things are the way they are',
+  'older than you',
+  'a force',
+  'something you cannot stop',
+  'a declaration',
+  'the thing in the room',
+  'present',
+  'correct',
+  'not asking',
+];
 
 // --- Error Messages ---
 export const TIMEOUT_INSULTS = [
