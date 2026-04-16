@@ -1,6 +1,6 @@
 # GreenBotV2
 
-A Discord bot that is specifically designed to not help you. It will mock you, insult you, go on unhinged tangents, and remember things you've said so it can use them against you later. It runs entirely locally on your own hardware with no external AI APIs.
+A Discord bot that is specifically designed to not help you. It makes confident off-topic declarations, derails conversations, and holds strong opinions about things nobody asked about. It runs entirely locally on your own hardware with no external AI APIs.
 
 > **Warning:** This bot swears, uses slurs, and will say things that are intentionally hurtful. It is not moderated. Deploy with full awareness of what it is.
 
@@ -9,17 +9,15 @@ A Discord bot that is specifically designed to not help you. It will mock you, i
 ## What it does
 
 - Responds when @mentioned, replied to, or DMed — with a local LLM running the `greenbot` persona
-- Randomly interjects into conversations when media is posted (12% chance, 30min cooldown per channel)
-- Remembers things users have said across sessions and may bring them up unprompted
-- Visually chaotic responses — randomly ALL CAPS, sPOnGeCaSe, or lowercase
-- Genuinely tries to be mean, not just edgy
+- Randomly interjects into conversations (12% chance on media, 3% chance on any message)
+- Makes short, chaotic, confidently wrong declarations — visually distorted with random ALL CAPS, sPOnGeCaSe, or lowercase
+- Deflects bot/AI references with randomized identity claims
+- Blocks prompt injection attempts before they reach the model
 
 ### Slash Commands
 | Command | Description |
 |---|---|
 | `/suggest` | Submit a suggestion — gets posted to a channel for review |
-| `/mem show` | See what the bot remembers about you |
-| `/mem clear` | Wipe your memory file |
 | `/todo` | Owner only — create a todo item |
 | `/health` | Check if the bot and Ollama are alive |
 | `/lobotomy` | Owner/admin only — resets bot state |
@@ -109,9 +107,7 @@ WantedBy=multi-user.target
 
 ## Privacy
 
-Data collection is **opt-in by interaction** — if you never talk to the bot, nothing is stored about you. See [privacy_policy.md](./privacy_policy.md) for full details.
-
-Users can view or delete their stored data at any time with `/mem show` and `/mem clear`.
+No user data is stored. The bot does not maintain memory of past conversations. Chat logs are written locally to `logs/` for server owner review only.
 
 ---
 
