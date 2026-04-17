@@ -24,7 +24,7 @@ function tempForDepth(depth = 0) {
   if (depth >= 35) return 1.25;  // getting strange
   if (depth >= 20) return 1.15;  // slight drift
   if (depth >= 10) return 1.05;  // barely perceptible
-  return 0.95;                   // sharp and coherent
+  return 1.15;                   // punchy but not too precise
 }
 
 // This function already uses AbortController for timeouts, it's very robust.
@@ -49,7 +49,10 @@ export async function ollamaChat(messages, depth = 0) {
       throw new Error(`ollama ${res.status} ${res.statusText} :: ${body}`);
     }
     const data = await res.json().catch(e => { throw new Error(`ollama JSON parse error :: ${e?.message || e}`); });
-    const out = data?.message?.content ?? '';
+    const raw = data?.message?.content ?? '';
+    // extract only what comes after </think> — if no closing tag, the whole response is thinking, discard it
+    const thinkEnd = raw.indexOf('</think>');
+    const out = (thinkEnd !== -1 ? raw.slice(thinkEnd + 8) : raw.replace(/<think>[\s\S]*/gi, '')).trim();
     return (out || '…').slice(0, 1900).trim();
   } finally {
     clearTimeout(t);
