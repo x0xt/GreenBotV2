@@ -17,12 +17,12 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
   const remaining = cooldownCheck(`roast:${interaction.user.id}`);
   if (remaining > 0) {
-    return interaction.reply({ content: `slow down. ${remaining}s left.`, ephemeral: true });
+    return interaction.reply({ content: `not yet. ${remaining}s.`, ephemeral: true });
   }
 
   const target = interaction.options.getUser('target');
   if (target.id === interaction.client.user.id) {
-    return interaction.reply({ content: 'nice try.', ephemeral: true });
+    return interaction.reply({ content: 'no.', ephemeral: true });
   }
 
   await interaction.deferReply();
@@ -37,6 +37,6 @@ export async function execute(interaction) {
 
     await interaction.editReply({ content: `${target} ${safe(replaceBotRefs(clean))}` });
   } catch {
-    await interaction.editReply({ content: 'model is busy. try again.' });
+    await interaction.editReply({ content: 'busy. whatever.' });
   }
 }

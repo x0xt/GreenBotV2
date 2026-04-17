@@ -13,7 +13,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
   if (!isOwner(interaction.user.id)) {
-    return interaction.reply({ content: 'nope. only my owner can add todos.', ephemeral: true });
+    return interaction.reply({ content: 'no.', ephemeral: true });
   }
 
   const text = interaction.options.getString('text');
@@ -62,7 +62,7 @@ export async function execute(interaction) {
   } catch (err) {
     console.error('todo command failed:', err);
     return interaction.reply({
-      content: `failed to add todo (skill issue or perms): ${err?.message || err}`,
+      content: `broke: ${err?.message || err}`,
       ephemeral: true,
     });
   }

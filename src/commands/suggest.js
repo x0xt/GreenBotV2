@@ -15,7 +15,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
   const remaining = cooldownCheck(`suggest:${interaction.user.id}`);
   if (remaining > 0) {
-    return interaction.reply({ content: `calm down, you can suggest again in ${remaining} seconds.`, flags: MessageFlags.Ephemeral });
+    return interaction.reply({ content: `${remaining}s. wait.`, flags: MessageFlags.Ephemeral });
   }
 
   const suggestionText = interaction.options.getString('suggestion');
@@ -24,7 +24,7 @@ export async function execute(interaction) {
     const suggestionsChannel = await interaction.client.channels.fetch(SUGGEST_CHANNEL_ID);
     if (!suggestionsChannel) {
       console.error(`Could not find suggestions channel with ID: ${SUGGEST_CHANNEL_ID}`);
-      return interaction.reply({ content: "i couldn't find the suggestions channel. my master probably screwed up the config.", flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: "suggestions channel is gone. config is borked.", flags: MessageFlags.Ephemeral });
     }
 
     const embed = new EmbedBuilder()
@@ -54,10 +54,10 @@ export async function execute(interaction) {
 
     cooldownSet(`suggest:${interaction.user.id}`, parseInt(SUGGEST_COOLDOWN_SECONDS, 10) * 1000);
 
-    await interaction.reply({ content: "cool, i've passed your suggestion along. it's probably still trash though.", flags: MessageFlags.Ephemeral });
+    await interaction.reply({ content: "sent. probably won't matter.", flags: MessageFlags.Ephemeral });
 
   } catch (error) {
     console.error('Failed to post suggestion:', error);
-    await interaction.reply({ content: "something broke when i tried to send your suggestion. skill issue.", flags: MessageFlags.Ephemeral });
+    await interaction.reply({ content: "broke. try again or don't.", flags: MessageFlags.Ephemeral });
   }
 }

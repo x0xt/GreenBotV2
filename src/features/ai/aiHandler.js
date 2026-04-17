@@ -142,12 +142,11 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     }
   }).catch(async (err) => {
     const emsg = String(err?.message || err);
-    if (emsg.includes('breaker_open')) return 'model is cooling down — try again in a moment.';
+    if (emsg.includes('breaker_open')) return 'not now.';
     if (emsg.includes('user_queue_full')) return SPAMMER_INSULTS[Math.floor(Math.random() * SPAMMER_INSULTS.length)];
-    if (emsg.includes('global_queue_full')) return 'too many requests right now — try again shortly.';
-    // timeout / unknown error path: show gif and provide a short fallback
+    if (emsg.includes('global_queue_full')) return 'busy. whatever.';
     await notifyTimeout(msg.channel).catch(() => {});
-    return 'brain lag — try again in a sec.';
+    return 'give me a second.';
   });
 
   // Persist memory + log (non-blocking) — skip for bots, privacy policy is human-only

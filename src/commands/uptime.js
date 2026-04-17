@@ -18,5 +18,5 @@ export async function execute(interaction) {
   if (m % 60 > 0) parts.push(`${m % 60}m`);
   parts.push(`${s % 60}s`);
 
-  await interaction.reply({ content: `up for **${parts.join(' ')}**`, ephemeral: true });
+  await interaction.reply({ content: `**${parts.join(' ')}**`, ephemeral: true });
 }

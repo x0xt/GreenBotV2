@@ -20,7 +20,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
   if (!isAdmin(interaction.user.id)) {
-    return interaction.reply({ content: 'nope.', ephemeral: true });
+    return interaction.reply({ content: 'no.', ephemeral: true });
   }
 
   const target = interaction.options.getUser('user');

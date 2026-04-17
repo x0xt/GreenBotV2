@@ -30,7 +30,7 @@ export async function execute(interaction) {
   const userQueue = buckets.get(authorId)?.queue.length ?? 0;
 
   const lines = [
-    `**ollama** ${ollamaStatus === 'ok' ? '🟢' : '🔴'} ${ollamaStatus} — model ${modelLoaded ? 'loaded' : 'unloaded'}`,
+    `**ollama** ${ollamaStatus === 'ok' ? '🟢' : '🔴'} ${ollamaStatus} | model ${modelLoaded ? 'loaded' : 'unloaded'}`,
     `**circuit breaker** ${open ? `🔴 open (resets in ${cooldownSecs}s)` : '🟢 closed'}`,
     `**global** ${globalInFlight} in-flight / ${globalQueue.length} queued`,
     `**your queue** ${userInFlight} in-flight / ${userQueue} queued`,

@@ -10,7 +10,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
   if (!isAdmin(interaction.user.id)) {
-    return interaction.reply({ content: 'You lack the authority to perform this lobotomy.', flags: 64 });
+    return interaction.reply({ content: 'no.', flags: 64 });
   }
 
   // GIF is required — if it's missing, warn loudly but still restart

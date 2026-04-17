@@ -8,7 +8,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
   if (!isAdmin(interaction.user.id)) {
-    return interaction.reply({ content: 'nope.', ephemeral: true });
+    return interaction.reply({ content: 'no.', ephemeral: true });
   }
 
   const { totalResponses, breakerTrips, perUser } = getStats();
@@ -16,7 +16,7 @@ export async function execute(interaction) {
   const topUsers = [...perUser.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
-    .map(([id, count], i) => `${i + 1}. <@${id}> — ${count}`)
+    .map(([id, count], i) => `${i + 1}. <@${id}> ${count}`)
     .join('\n') || 'none yet';
 
   const lines = [
