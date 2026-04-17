@@ -31,13 +31,20 @@ function stripSelfIntro(text) {
     .trim();
 }
 
-export function shapeWithSeed(text, max = 900, seedStr) {
+export function shapeWithSeed(text, max = 900, seedStr, targeted = false) {
   let t = stripSelfIntro((text || '').replace(/\s+/g, ' ').trim());
   const r = rnd01(hash32(seedStr));
 
-  if (r < 0.35) { t = t.toUpperCase(); }
-  else if (r < 0.65) { t = spongeCaseSeeded(t, seedStr); }
-  else { t = t.toLowerCase(); }
+  if (targeted) {
+    // full range when mocking someone directly
+    if (r < 0.30) { t = t.toUpperCase(); }
+    else if (r < 0.60) { t = spongeCaseSeeded(t, seedStr); }
+    else { t = t.toLowerCase(); }
+  } else {
+    // interjections: all caps or lowercase only, no spongecase
+    if (r < 0.40) { t = t.toUpperCase(); }
+    else { t = t.toLowerCase(); }
+  }
 
   if (t.length <= max) return t;
   const cut = t.slice(0, max);

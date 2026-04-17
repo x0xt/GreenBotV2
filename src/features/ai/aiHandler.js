@@ -137,7 +137,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   const reply = await schedule(msg.author.id, async () => {
     try {
       const raw = await ollamaChat(messages, getDepth(msg.author.id));
-      return shapeWithSeed(raw, 1800, `${msg.id}:${msg.author.id}`);
+      return shapeWithSeed(raw, 1800, `${msg.id}:${msg.author.id}`, !interjecting);
     } catch (e) {
       console.error('OLLAMA ERR:', e);
       recordFailure();
