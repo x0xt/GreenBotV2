@@ -65,8 +65,9 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   // light scrubbing to avoid grotesque context injections while preserving attitude
   const content = mergedContent
     .replace(/```[\s\S]*?```/g, '')
-    .replace(/https?:\/\/\S+/g, '')
-    .replace(/<a?:\w+:\d+>/g, '')
+    .replace(/https?:\/\/\S*\.gif\S*/gi, 'a gif')
+    .replace(/https?:\/\/\S+/g, 'a link')
+    .replace(/<a?:(\w+):\d+>/g, (_, name) => name)
     .replace(/<@[!&]?\d+>/g, '')
     .replace(/<#\d+>/g, '')
     .replace(/<[^>]+>/g, '')
