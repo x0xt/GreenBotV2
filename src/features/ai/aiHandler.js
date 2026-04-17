@@ -20,6 +20,7 @@ export function stripExoticUnicode(text) {
   return text
     .replace(/[\u{1D400}-\u{1D7FF}]/gu, '') // mathematical alphanumeric symbols (𝑎𝑏𝑐 etc)
     .replace(/\bsystem\b\s*$/i, '')          // leaked stop token
+    .replace(/[—–\-]+/g, ' ')               // dashes to spaces
     .replace(/\s+/g, ' ')
     .trim();
 }
