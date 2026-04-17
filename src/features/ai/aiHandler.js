@@ -66,18 +66,25 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   // extract embed context — titles and descriptions from link previews
   const embedContext = (msg.embeds || [])
-    .filter(e => e.title || e.description)
     .map(e => {
+      if (e.type === 'gifv' || e.type === 'image') return 'a gif';
       const parts = [];
       if (e.title) parts.push(e.title);
       if (e.description) parts.push(e.description.slice(0, 200));
-      return parts.join(': ');
+      return parts.filter(Boolean).join(': ');
     })
+    .filter(Boolean)
     .join(' | ');
+
+  // check attachments for gifs
+  const hasGifAttachment = (msg.attachments || new Map()).some(
+    a => a.contentType?.includes('gif') || a.name?.endsWith('.gif')
+  );
 
   // light scrubbing to avoid grotesque context injections while preserving attitude
   const content = mergedContent
     .replace(/```[\s\S]*?```/g, '')
+    .replace(/https?:\/\/(?:tenor\.com|giphy\.com|media\.tenor\.com|i\.giphy\.com)\S*/gi, 'a gif')
     .replace(/https?:\/\/\S*\.gif\S*/gi, 'a gif')
     .replace(/https?:\/\/\S+/g, 'a link')
     .replace(/<a?:(\w+):\d+>/g, (_, name) => name)
@@ -88,7 +95,9 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     .replace(/^!gb\s*/i, '')
     .trim();
 
-  const fullContent = embedContext ? `${content} [embed: ${embedContext}]`.trim() : content;
+  const gifNote = hasGifAttachment ? 'a gif' : '';
+  const extras = [gifNote, embedContext ? `embed: ${embedContext}` : ''].filter(Boolean).join(', ');
+  const fullContent = extras ? `${content} [${extras}]`.trim() : content;
 
   const base = fullContent.slice(0, 1400);
 
