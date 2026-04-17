@@ -64,6 +64,17 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   // merge bursts from same user to reduce spam into the model
   const mergedContent = await coalesceUserMessage(msg.author.id, (msg.content || '').trim());
 
+  // extract embed context — titles and descriptions from link previews
+  const embedContext = (msg.embeds || [])
+    .filter(e => e.title || e.description)
+    .map(e => {
+      const parts = [];
+      if (e.title) parts.push(e.title);
+      if (e.description) parts.push(e.description.slice(0, 200));
+      return parts.join(': ');
+    })
+    .join(' | ');
+
   // light scrubbing to avoid grotesque context injections while preserving attitude
   const content = mergedContent
     .replace(/```[\s\S]*?```/g, '')
@@ -77,7 +88,9 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     .replace(/^!gb\s*/i, '')
     .trim();
 
-  const base = content.slice(0, 1400);
+  const fullContent = embedContext ? `${content} [embed: ${embedContext}]`.trim() : content;
+
+  const base = fullContent.slice(0, 1400);
 
   // Detect prompt injection attempts — don't pass them to the model, just dismiss
   const JAILBREAK_PATTERNS = [
