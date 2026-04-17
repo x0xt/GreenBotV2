@@ -14,11 +14,20 @@ import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB, BOT_REPLACEMENTS 
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
 import { trackAndCheck } from './milestones.js';
 
+// Strip mathematical unicode that poisons conversation history
+// Only targets the specific ranges that caused the mirror hall snowball
+export function stripExoticUnicode(text) {
+  return text
+    .replace(/[\u{1D400}-\u{1D7FF}]/gu, '') // mathematical alphanumeric symbols (𝑎𝑏𝑐 etc)
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function randBotSlur() {
   return BOT_REPLACEMENTS[Math.floor(Math.random() * BOT_REPLACEMENTS.length)];
 }
 
-function replaceBotRefs(text) {
+export function replaceBotRefs(text) {
   return text
     .replace(/\bartificial intelligence\b/gi, randBotSlur)
     .replace(/\blanguage model\b/gi, randBotSlur)
@@ -147,16 +156,19 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     logChat(guildId, msg.author.id, msg.author.username, userMessage, reply, { channelId: msg.channel.id, type: interjecting ? 'interject' : 'targeted' });
   }
 
+  const stripped = stripExoticUnicode(reply || '');
+  const cleanReply = stripped.replace(/[^a-zA-Z0-9]/g, '').length < 3 ? 'no' : stripped;
+
   // Push to conversation history and increment depth
   if (!interjecting) {
     pushHistory(channelId, 'user', userMessage);
-    pushHistory(channelId, 'assistant', reply);
+    pushHistory(channelId, 'assistant', cleanReply);
     incrementDepth(msg.author.id);
   }
 
   // Assemble final reply message; include occasional images during interjections
   const options = {
-    content: safe(replaceBotRefs(reply || '...')),
+    content: safe(replaceBotRefs(cleanReply)),
     allowedMentions: { parse: [], repliedUser: false },
     embeds: [],
   };

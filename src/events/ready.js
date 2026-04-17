@@ -3,10 +3,14 @@ import { ensureDir } from '../features/user/userMemory.js';
 import { IMAGE_POOL_ROOT, OLLAMA_HOST, MODEL } from '../shared/constants.js';
 import { fetchWithTimeout } from '../shared/network.js';
 
+let botStartTime = Date.now();
+export function getBotStartTime() { return botStartTime; }
+
 export const name = Events.ClientReady;
 export const once = true;
 
 export async function execute(client) {
+  botStartTime = Date.now();
   await ensureDir(IMAGE_POOL_ROOT);
 
   try {

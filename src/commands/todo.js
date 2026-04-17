@@ -14,7 +14,6 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
   if (!isOwner(interaction.user.id)) {
     return interaction.reply({ content: 'nope. only my owner can add todos.', ephemeral: true });
-    // ^ this means OWNER_ID/OWNER_IDS didn’t match if you see it
   }
 
   const text = interaction.options.getString('text');
@@ -29,7 +28,7 @@ export async function execute(interaction) {
   const todoChannel = await interaction.client.channels.fetch(TODO_CHANNEL_ID).catch(() => null);
   if (!todoChannel) {
     return interaction.reply({
-      content: 'i can’t find the todo channel. config is borked.',
+      content: "i can’t find the todo channel. config is borked.",
       ephemeral: true,
     });
   }

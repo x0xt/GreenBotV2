@@ -7,6 +7,7 @@ import {
   BREAKER_FAILS,
   BREAKER_COOLDOWN_MS
 } from '../../shared/constants.js';
+import { recordBreakerTrip } from '../../shared/stats.js';
 
 // These variables are exported so the !gb health command can read them.
 export let globalInFlight = 0;
@@ -25,6 +26,7 @@ export function recordFailure() {
     const jitter = Math.floor(Math.random() * 4000);
     breakerTrippedUntil = now + BREAKER_COOLDOWN_MS + jitter;
     console.warn(`CIRCUIT BREAKER TRIPPED for ${breakerTrippedUntil - now}ms`);
+    recordBreakerTrip();
   }
 }
 

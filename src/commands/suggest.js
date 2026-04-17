@@ -1,9 +1,7 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
 import { SUGGEST_CHANNEL_ID, SUGGEST_COOLDOWN_SECONDS } from '../shared/constants.js';
 import { recordSuggestion } from '../features/suggestions/registry.js';
-import { MessageFlags } from "discord.js";
-
-const userCooldowns = new Map();
+import { check as cooldownCheck, set as cooldownSet } from '../shared/cooldown.js';
 
 export const data = new SlashCommandBuilder()
   .setName('suggest')
@@ -15,10 +13,9 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction) {
-  const cooldown = userCooldowns.get(interaction.user.id);
-  if (cooldown && Date.now() < cooldown) {
-    const timeLeft = Math.ceil((cooldown - Date.now()) / 1000);
-    return interaction.reply({ content: `calm down, you can suggest again in ${timeLeft} seconds.`, flags: MessageFlags.Ephemeral });
+  const remaining = cooldownCheck(`suggest:${interaction.user.id}`);
+  if (remaining > 0) {
+    return interaction.reply({ content: `calm down, you can suggest again in ${remaining} seconds.`, flags: MessageFlags.Ephemeral });
   }
 
   const suggestionText = interaction.options.getString('suggestion');
@@ -55,8 +52,7 @@ export async function execute(interaction) {
       link,
     });
 
-    const cooldownSeconds = parseInt(SUGGEST_COOLDOWN_SECONDS, 10);
-    userCooldowns.set(interaction.user.id, Date.now() + cooldownSeconds * 1000);
+    cooldownSet(`suggest:${interaction.user.id}`, parseInt(SUGGEST_COOLDOWN_SECONDS, 10) * 1000);
 
     await interaction.reply({ content: "cool, i've passed your suggestion along. it's probably still trash though.", flags: MessageFlags.Ephemeral });
 

@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { recordResponse } from '../shared/stats.js';
 
 const LOG_ROOT = path.resolve('./logs');
 
@@ -16,6 +17,7 @@ export async function logChat(guildId, userId, username, userMessage, botReply, 
     const ch = channelId ? ` #${channelId}` : '';
     const entry = `[${ts}][${type}${ch}] ${username}: ${userMessage}\n[${ts}][${type}${ch}] greenbot: ${botReply}\n\n`;
     await fs.appendFile(logPath, entry, 'utf8');
+    recordResponse(userId);
   } catch (e) {
     console.error('chatLogger err:', e?.message || e);
   }

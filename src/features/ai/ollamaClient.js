@@ -39,7 +39,7 @@ export async function ollamaChat(messages, depth = 0) {
         model: MODEL,
         messages,
         stream: false,
-        keep_alive: '30m',
+        keep_alive: '-1',
         options: { num_predict: randomTokenBudget(depth), temperature: tempForDepth(depth) }
       }),
       signal: controller.signal
