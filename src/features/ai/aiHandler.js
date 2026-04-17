@@ -64,11 +64,13 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   // light scrubbing to avoid grotesque context injections while preserving attitude
   const content = mergedContent
-    .replace(/```[\s\S]*?```/g, '[code]')
-    .replace(/https?:\/\/\S+/g, '[link]')
-    .replace(/<a?:\w+:\d+>/g, '[emoji]')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/<a?:\w+:\d+>/g, '')
+    .replace(/<@[!&]?\d+>/g, '')
+    .replace(/<#\d+>/g, '')
+    .replace(/<[^>]+>/g, '')
     .replace(/\n{3,}/g, '\n\n')
-    .replace(/<@!?\d+>/g, '')
     .replace(/^!gb\s*/i, '')
     .trim();
 
