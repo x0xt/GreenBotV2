@@ -194,7 +194,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   // Occasionally ping a random guild member
   let randomPing = '';
-  if (msg.guild && Math.random() < 0.15) {
+  if (msg.guild && Math.random() < 0.075) {
     const members = msg.guild.members.cache.filter(m => !m.user.bot && m.id !== msg.author.id);
     if (members.size > 0) {
       const picked = members.at(Math.floor(Math.random() * members.size));
