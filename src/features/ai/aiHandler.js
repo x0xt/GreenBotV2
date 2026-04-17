@@ -170,10 +170,20 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     incrementDepth(msg.author.id);
   }
 
+  // Occasionally ping a random guild member
+  let randomPing = '';
+  if (msg.guild && Math.random() < 0.15) {
+    const members = msg.guild.members.cache.filter(m => !m.user.bot && m.id !== msg.author.id);
+    if (members.size > 0) {
+      const picked = members.at(Math.floor(Math.random() * members.size));
+      if (picked) randomPing = `<@${picked.id}> `;
+    }
+  }
+
   // Assemble final reply message; include occasional images during interjections
   const options = {
-    content: safe(replaceBotRefs(cleanReply)),
-    allowedMentions: { parse: [], repliedUser: false },
+    content: randomPing + safe(replaceBotRefs(cleanReply)),
+    allowedMentions: { parse: ['users'], repliedUser: false },
     embeds: [],
   };
 
