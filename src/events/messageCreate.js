@@ -94,7 +94,7 @@ export async function execute(msg) {
     }
 
     // Unprompted summon — tiny chance to butt into any text message
-    if (!targeted && !interjecting && !isBot && msg.guild && raw.length > 0 && Math.random() < 0.03) {
+    if (!targeted && !interjecting && !isBot && msg.guild && raw.length > 0 && Math.random() < 0.01) {
       interjecting = true;
     }
 
