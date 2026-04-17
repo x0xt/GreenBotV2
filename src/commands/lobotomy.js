@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
+import { SlashCommandBuilder, AttachmentBuilder, PermissionFlagsBits } from 'discord.js';
 import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -6,7 +6,8 @@ import { isAdmin, TIMEOUT_ERROR_GIF } from '../shared/constants.js';
 
 export const data = new SlashCommandBuilder()
   .setName('lobotomy')
-  .setDescription('Restarts the bot. Only usable by the bot owner and admins.');
+  .setDescription('Restarts the bot. Only usable by the bot owner and admins.')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
   if (!isAdmin(interaction.user.id)) {

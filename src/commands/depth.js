@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { getDepth } from '../features/ai/depthTracker.js';
 import { isAdmin } from '../shared/constants.js';
 
@@ -16,7 +16,8 @@ export const data = new SlashCommandBuilder()
   .setDescription('Check how deep into the escalation a user is. Admin only.')
   .addUserOption(o =>
     o.setName('user').setDescription('Who to check').setRequired(true)
-  );
+  )
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
   if (!isAdmin(interaction.user.id)) {

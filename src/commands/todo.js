@@ -1,5 +1,5 @@
 // src/commands/todo.js
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { TODO_CHANNEL_ID, isOwner } from '../shared/constants.js';
 import { upsertTodo } from '../features/todo/dao.js';
 import { renderTodoEmbed } from '../features/todo/renderer.js';
@@ -9,7 +9,8 @@ export const data = new SlashCommandBuilder()
   .setDescription('Create a to-do item (OWNER only)')
   .addStringOption(o =>
     o.setName('text').setDescription('What needs to be done?').setRequired(true)
-  );
+  )
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
   if (!isOwner(interaction.user.id)) {

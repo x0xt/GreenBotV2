@@ -1,10 +1,11 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { getStats } from '../shared/stats.js';
 import { isAdmin } from '../shared/constants.js';
 
 export const data = new SlashCommandBuilder()
   .setName('stats')
-  .setDescription('Usage stats since last restart. Admin only.');
+  .setDescription('Usage stats since last restart. Admin only.')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
   if (!isAdmin(interaction.user.id)) {
