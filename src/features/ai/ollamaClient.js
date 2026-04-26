@@ -19,6 +19,13 @@ function randomTokenBudget(depth = 0) {
   return Math.floor(Math.random() * 50) + 100;                   // long:   100-150
 }
 
+function trimToSentence(text) {
+  if (!text) return text;
+  if (/[.!?]$/.test(text)) return text;
+  const end = Math.max(text.lastIndexOf('.'), text.lastIndexOf('!'), text.lastIndexOf('?'));
+  return end > 10 ? text.slice(0, end + 1).trim() : text;
+}
+
 function tempForDepth(depth = 0) {
   if (depth >= 50) return 1.4;   // noticeably weird but still words
   if (depth >= 35) return 1.25;  // getting strange
@@ -53,7 +60,7 @@ export async function ollamaNovel(messages) {
     const raw = data?.message?.content ?? '';
     const thinkEnd = raw.indexOf('</think>');
     const out = (thinkEnd !== -1 ? raw.slice(thinkEnd + 8) : raw.replace(/<think>[\s\S]*/gi, '')).trim();
-    return (out || '…').slice(0, 1900).trim();
+    return trimToSentence((out || '…').slice(0, 1900).trim());
   } finally {
     clearTimeout(t);
   }
@@ -86,7 +93,7 @@ export async function ollamaChat(messages, depth = 0, { hasImage = false } = {})
     // extract only what comes after </think> — if no closing tag, the whole response is thinking, discard it
     const thinkEnd = raw.indexOf('</think>');
     const out = (thinkEnd !== -1 ? raw.slice(thinkEnd + 8) : raw.replace(/<think>[\s\S]*/gi, '')).trim();
-    return (out || '…').slice(0, 1900).trim();
+    return trimToSentence((out || '…').slice(0, 1900).trim());
   } finally {
     clearTimeout(t);
   }
