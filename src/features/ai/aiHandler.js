@@ -13,6 +13,7 @@ import { safe } from '../../shared/safe.js';
 import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB, BOT_REPLACEMENTS, NOVEL_PROB } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
 import { trackAndCheck } from './milestones.js';
+import { describeAttachment } from '../vision/imageDescriber.js';
 
 // Strip mathematical unicode that poisons conversation history
 // Only targets the specific ranges that caused the mirror hall snowball
@@ -76,10 +77,11 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     .filter(Boolean)
     .join(' | ');
 
-  // check attachments for gifs
-  const hasGifAttachment = (msg.attachments || new Map()).some(
-    a => a.contentType?.includes('gif') || a.name?.endsWith('.gif')
+  // describe image/gif attachments via vision model (non-blocking, best-effort)
+  const imageAttachment = (msg.attachments || new Map()).find(
+    a => /\.(jpe?g|png|gif|webp)$/i.test(a.name ?? '') || a.contentType?.startsWith('image/')
   );
+  const imageDescription = imageAttachment ? await describeAttachment(imageAttachment).catch(() => null) : null;
 
   // light scrubbing to avoid grotesque context injections while preserving attitude
   const content = mergedContent
@@ -95,8 +97,8 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     .replace(/^!gb\s*/i, '')
     .trim();
 
-  const gifNote = hasGifAttachment ? 'a gif' : '';
-  const extras = [gifNote, embedContext ? `embed: ${embedContext}` : ''].filter(Boolean).join(', ');
+  const imageNote = imageDescription ? `image: ${imageDescription}` : '';
+  const extras = [imageNote, embedContext ? `embed: ${embedContext}` : ''].filter(Boolean).join(', ');
   const fullContent = extras ? `${content} [${extras}]`.trim() : content;
 
   const base = fullContent.slice(0, 1400);
