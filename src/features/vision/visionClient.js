@@ -18,13 +18,18 @@ export async function describeImageBase64(base64, mimeType = 'image/jpeg') {
           images: [base64],
         }],
         stream: false,
+        think: false,
         options: { num_predict: 80, temperature: 0.3 },
       }),
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`vision ollama ${res.status}`);
     const data = await res.json();
-    return (data?.message?.content ?? '').trim().slice(0, 300) || null;
+    const raw = data?.message?.content ?? '';
+    // strip any leaked <think> blocks just in case
+    const thinkEnd = raw.indexOf('</think>');
+    const out = (thinkEnd !== -1 ? raw.slice(thinkEnd + 8) : raw.replace(/<think>[\s\S]*/gi, '')).trim();
+    return out.slice(0, 300) || null;
   } finally {
     clearTimeout(t);
   }

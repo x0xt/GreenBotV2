@@ -62,8 +62,16 @@ function shouldWarnQueue() { return true; }
 
 
 export async function handleAiChat(msg, interjecting, opts = {}) {
-  // merge bursts from same user to reduce spam into the model
-  const mergedContent = await coalesceUserMessage(msg.author.id, (msg.content || '').trim());
+  // find image attachment early so vision + coalescing can run in parallel
+  const imageAttachment = (msg.attachments || new Map()).find(
+    a => /\.(jpe?g|png|webp)$/i.test(a.name ?? '') || (a.contentType?.startsWith('image/') && !a.contentType?.includes('gif'))
+  );
+
+  // run vision and message coalescing in parallel — vision is slow on CPU, no reason to block on it serially
+  const [imageDescription, mergedContent] = await Promise.all([
+    imageAttachment ? describeAttachment(imageAttachment).catch(() => null) : Promise.resolve(null),
+    coalesceUserMessage(msg.author.id, (msg.content || '').trim()),
+  ]);
 
   // extract embed context — titles and descriptions from link previews
   const embedContext = (msg.embeds || [])
@@ -76,12 +84,6 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     })
     .filter(Boolean)
     .join(' | ');
-
-  // describe image/gif attachments via vision model (non-blocking, best-effort)
-  const imageAttachment = (msg.attachments || new Map()).find(
-    a => /\.(jpe?g|png|gif|webp)$/i.test(a.name ?? '') || a.contentType?.startsWith('image/')
-  );
-  const imageDescription = imageAttachment ? await describeAttachment(imageAttachment).catch(() => null) : null;
 
   // light scrubbing to avoid grotesque context injections while preserving attitude
   const content = mergedContent

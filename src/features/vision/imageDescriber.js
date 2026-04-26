@@ -1,7 +1,7 @@
 import { describeImageBase64 } from './visionClient.js';
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB
-const SUPPORTED = /\.(jpe?g|png|gif|webp)$/i;
+const SUPPORTED = /\.(jpe?g|png|webp)$/i; // GIFs excluded — model can't process them
 
 export async function describeAttachment(attachment) {
   if (!attachment?.url) return null;
