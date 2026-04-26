@@ -2,21 +2,21 @@ import { OLLAMA_HOST, MODEL, REQ_TIMEOUT_MS } from '../../shared/constants.js';
 
 function randomTokenBudget(depth = 0) {
   const r = Math.random();
-  if (depth >= 50) return Math.floor(Math.random() * 60) + 60;  // 50+: occasionally goes off, capped
+  if (depth >= 50) return Math.floor(Math.random() * 80) + 80;  // 50+: unhinged wall of text
   if (depth >= 20) {                               // 20+: getting weirder
-    if (r < 0.45) return Math.floor(Math.random() * 15) + 8;    // short:  8-23
-    if (r < 0.80) return Math.floor(Math.random() * 30) + 25;   // medium: 25-55
-    return Math.floor(Math.random() * 40) + 55;                  // long:   55-95
+    if (r < 0.45) return Math.floor(Math.random() * 20) + 40;   // short:  40-60
+    if (r < 0.80) return Math.floor(Math.random() * 40) + 60;   // medium: 60-100
+    return Math.floor(Math.random() * 50) + 100;                 // long:   100-150
   }
   if (depth >= 10) {                               // 10-19: warming up
-    if (r < 0.55) return Math.floor(Math.random() * 15) + 8;    // short:  8-23
-    if (r < 0.88) return Math.floor(Math.random() * 25) + 25;   // medium: 25-50
-    return Math.floor(Math.random() * 30) + 50;                  // long:   50-80
+    if (r < 0.55) return Math.floor(Math.random() * 20) + 40;   // short:  40-60
+    if (r < 0.88) return Math.floor(Math.random() * 40) + 60;   // medium: 60-100
+    return Math.floor(Math.random() * 50) + 100;                 // long:   100-150
   }
-  // 0-9: short and weird by default
-  if (r < 0.70) return Math.floor(Math.random() * 12) + 20;     // short:  20-32
-  if (r < 0.93) return Math.floor(Math.random() * 20) + 33;     // medium: 33-53
-  return Math.floor(Math.random() * 20) + 54;                    // long:   54-74
+  // 0-9: punchy but complete sentences
+  if (r < 0.70) return Math.floor(Math.random() * 20) + 40;     // short:  40-60
+  if (r < 0.93) return Math.floor(Math.random() * 40) + 60;     // medium: 60-100
+  return Math.floor(Math.random() * 50) + 100;                   // long:   100-150
 }
 
 function tempForDepth(depth = 0) {
