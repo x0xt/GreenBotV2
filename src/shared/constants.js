@@ -47,7 +47,8 @@ const toBool = (v, def = true) => (v ? String(v).toLowerCase() === 'true' : def)
 // --- Image System Settings ---
 export const IMAGE_POOL_ROOT = path.resolve('./medias/pool');
 export const IMAGE_POOL_MAX_FILES = 500;
-export const IMAGE_ATTEMPT_PROB = 0.05;
+export const IMAGE_ATTEMPT_PROB = 0.02;
+export const NOVEL_PROB = 0.0001;
 export const IMAGE_MAX_SIZE_BYTES = 50 * 1024 * 1024;
 export const IMAGE_ALLOW_IN_SFW = false;
 export const IMAGE_ALLOWED_EXTENSIONS = [ '.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mov', '.webm' ];

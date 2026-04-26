@@ -3,14 +3,14 @@ import { logChat } from '../../lib/chatLogger.js';
 // file: src/features/ai/aiHandler.js
 import { EmbedBuilder } from 'discord.js';
 import { schedule, breakerOpen, recordFailure } from './backpressure.js';
-import { ollamaChat } from './ollamaClient.js';
+import { ollamaChat, ollamaNovel } from './ollamaClient.js';
 import { shapeWithSeed } from './tone.js';
 import { getHistory, pushHistory } from './conversationHistory.js';
 import { getDepth, incrementDepth } from './depthTracker.js';
 import { checkRage, mirrorSpam } from './spamTracker.js';
 import { getRandomImage } from '../media/imagePool.js';
 import { safe } from '../../shared/safe.js';
-import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB, BOT_REPLACEMENTS } from '../../shared/constants.js';
+import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB, BOT_REPLACEMENTS, NOVEL_PROB } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
 import { trackAndCheck } from './milestones.js';
 
@@ -157,11 +157,16 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     msg.channel.sendTyping().catch(() => {});
   }
 
+  // 0.01% chance to send a novel — bypasses the normal token budget and length cap
+  const isNovel = !interjecting && Math.random() < NOVEL_PROB;
+
   // Run through scheduler/backpressure and call the model
   const reply = await schedule(msg.author.id, async () => {
     try {
-      const raw = await ollamaChat(messages, getDepth(msg.author.id));
-      return shapeWithSeed(raw, 1800, `${msg.id}:${msg.author.id}`, !interjecting);
+      const raw = isNovel
+        ? await ollamaNovel(messages)
+        : await ollamaChat(messages, getDepth(msg.author.id));
+      return shapeWithSeed(raw, isNovel ? 1900 : 1800, `${msg.id}:${msg.author.id}`, !interjecting);
     } catch (e) {
       console.error('OLLAMA ERR:', e);
       recordFailure();
@@ -214,7 +219,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   if (interjecting && Math.random() < IMAGE_ATTEMPT_PROB) {
     const img = await getRandomImage().catch(() => null);
     if (img) imageUrls = [img];
-  } else if (!interjecting && Math.random() < 0.07) {
+  } else if (!interjecting && Math.random() < 0.03) {
     const img = await getRandomImage().catch(() => null);
     if (img) imageUrls = [img];
   }

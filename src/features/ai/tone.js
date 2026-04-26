@@ -35,8 +35,8 @@ export function shapeWithSeed(text, max = 900, seedStr, targeted = false) {
   let t = stripSelfIntro((text || '').replace(/\s+/g, ' ').trim());
   const r = rnd01(hash32(seedStr));
 
-  if (r < 0.08 && targeted) { t = spongeCaseSeeded(t, seedStr); }
-  else if (r < 0.40) { t = t.toUpperCase(); }
+  if (r < 0.03 && targeted) { t = spongeCaseSeeded(t, seedStr); }
+  else if (r < 0.50) { t = t.toUpperCase(); }
   else { t = t.toLowerCase(); }
 
   if (t.length <= max) return t;

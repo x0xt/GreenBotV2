@@ -29,7 +29,7 @@ export async function execute(interaction) {
   cooldownSet(`roast:${interaction.user.id}`, ROAST_COOLDOWN_MS);
 
   try {
-    const prompt = `say something short and dismissive to ${target.username}. one or two lines max.`;
+    const prompt = `deliver a brutal one-liner about ${target.username}. do NOT address them directly — make a declaration about them to the room. one line.`;
     const raw = await ollamaChat([{ role: 'user', content: prompt }], 0);
     const shaped = shapeWithSeed(raw, 1800, `${interaction.id}:${target.id}`);
     const stripped = stripExoticUnicode(shaped);

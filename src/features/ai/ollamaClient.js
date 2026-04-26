@@ -28,6 +28,36 @@ function tempForDepth(depth = 0) {
 }
 
 // This function already uses AbortController for timeouts, it's very robust.
+export async function ollamaNovel(messages) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), REQ_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${OLLAMA_HOST}/api/chat`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        stream: false,
+        keep_alive: -1,
+        options: { num_predict: 700, temperature: 1.15 }
+      }),
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`ollama ${res.status} ${res.statusText} :: ${body}`);
+    }
+    const data = await res.json().catch(e => { throw new Error(`ollama JSON parse error :: ${e?.message || e}`); });
+    const raw = data?.message?.content ?? '';
+    const thinkEnd = raw.indexOf('</think>');
+    const out = (thinkEnd !== -1 ? raw.slice(thinkEnd + 8) : raw.replace(/<think>[\s\S]*/gi, '')).trim();
+    return (out || '…').slice(0, 1900).trim();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 export async function ollamaChat(messages, depth = 0) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), REQ_TIMEOUT_MS);
