@@ -39,6 +39,7 @@ export async function ollamaNovel(messages) {
         model: MODEL,
         messages,
         stream: false,
+        think: false,
         keep_alive: -1,
         options: { num_predict: 700, temperature: 1.15 }
       }),
@@ -69,6 +70,7 @@ export async function ollamaChat(messages, depth = 0) {
         model: MODEL,
         messages,
         stream: false,
+        think: false,
         keep_alive: -1,
         options: { num_predict: randomTokenBudget(depth), temperature: tempForDepth(depth) }
       }),
