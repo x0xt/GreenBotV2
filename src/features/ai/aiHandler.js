@@ -13,7 +13,6 @@ import { safe } from '../../shared/safe.js';
 import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB, BOT_REPLACEMENTS, NOVEL_PROB } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
 import { trackAndCheck } from './milestones.js';
-import { describeAttachment } from '../vision/imageDescriber.js';
 
 // Strip mathematical unicode that poisons conversation history
 // Only targets the specific ranges that caused the mirror hall snowball
@@ -62,16 +61,8 @@ function shouldWarnQueue() { return true; }
 
 
 export async function handleAiChat(msg, interjecting, opts = {}) {
-  // find image attachment early so vision + coalescing can run in parallel
-  const imageAttachment = (msg.attachments || new Map()).find(
-    a => /\.(jpe?g|png|webp)$/i.test(a.name ?? '') || (a.contentType?.startsWith('image/') && !a.contentType?.includes('gif'))
-  );
-
-  // run vision and message coalescing in parallel — vision is slow on CPU, no reason to block on it serially
-  const [imageDescription, mergedContent] = await Promise.all([
-    imageAttachment ? describeAttachment(imageAttachment).catch(() => null) : Promise.resolve(null),
-    coalesceUserMessage(msg.author.id, (msg.content || '').trim()),
-  ]);
+  // merge bursts from same user to reduce spam into the model
+  const mergedContent = await coalesceUserMessage(msg.author.id, (msg.content || '').trim());
 
   // extract embed context — titles and descriptions from link previews
   const embedContext = (msg.embeds || [])
@@ -99,8 +90,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     .replace(/^!gb\s*/i, '')
     .trim();
 
-  const imageNote = imageDescription ? `image: ${imageDescription}` : '';
-  const extras = [imageNote, embedContext ? `embed: ${embedContext}` : ''].filter(Boolean).join(', ');
+  const extras = [embedContext ? `embed: ${embedContext}` : ''].filter(Boolean).join(', ');
   const fullContent = extras ? `${content} [${extras}]`.trim() : content;
 
   const base = fullContent.slice(0, 1400);
