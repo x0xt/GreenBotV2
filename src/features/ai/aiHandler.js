@@ -175,7 +175,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     try {
       const raw = isNovel
         ? await ollamaNovel(messages)
-        : await ollamaChat(messages, getDepth(msg.author.id));
+        : await ollamaChat(messages, getDepth(msg.author.id), { hasImage: !!imageData });
       return shapeWithSeed(raw, isNovel ? 1900 : 1800, `${msg.id}:${msg.author.id}`, !interjecting);
     } catch (e) {
       console.error('OLLAMA ERR:', e);

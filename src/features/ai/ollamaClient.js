@@ -59,9 +59,10 @@ export async function ollamaNovel(messages) {
   }
 }
 
-export async function ollamaChat(messages, depth = 0) {
+export async function ollamaChat(messages, depth = 0, { hasImage = false } = {}) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), REQ_TIMEOUT_MS);
+  const budget = hasImage ? Math.max(randomTokenBudget(depth), 120) : randomTokenBudget(depth);
   try {
     const res = await fetch(`${OLLAMA_HOST}/api/chat`, {
       method: 'POST',
@@ -72,7 +73,7 @@ export async function ollamaChat(messages, depth = 0) {
         stream: false,
         think: false,
         keep_alive: -1,
-        options: { num_predict: randomTokenBudget(depth), temperature: tempForDepth(depth) }
+        options: { num_predict: budget, temperature: tempForDepth(depth) }
       }),
       signal: controller.signal
     });
