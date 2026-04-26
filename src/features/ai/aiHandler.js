@@ -13,6 +13,7 @@ import { safe } from '../../shared/safe.js';
 import { SPAMMER_INSULTS, MERGE_WINDOW_MS, IMAGE_ATTEMPT_PROB, BOT_REPLACEMENTS, NOVEL_PROB } from '../../shared/constants.js';
 import { notifyTimeout } from '../../shared/notifyTimeout.js';
 import { trackAndCheck } from './milestones.js';
+import { prepareAttachment } from '../vision/imageDescriber.js';
 
 // Strip mathematical unicode that poisons conversation history
 // Only targets the specific ranges that caused the mirror hall snowball
@@ -61,8 +62,15 @@ function shouldWarnQueue() { return true; }
 
 
 export async function handleAiChat(msg, interjecting, opts = {}) {
-  // merge bursts from same user to reduce spam into the model
-  const mergedContent = await coalesceUserMessage(msg.author.id, (msg.content || '').trim());
+  // grab first supported image/gif attachment and coalesce messages in parallel
+  const attachment = (msg.attachments || new Map()).find(
+    a => /\.(jpe?g|png|gif|webp)$/i.test(a.name ?? '') || a.contentType?.startsWith('image/')
+  );
+
+  const [imageData, mergedContent] = await Promise.all([
+    attachment ? prepareAttachment(attachment).catch(() => null) : Promise.resolve(null),
+    coalesceUserMessage(msg.author.id, (msg.content || '').trim()),
+  ]);
 
   // extract embed context — titles and descriptions from link previews
   const embedContext = (msg.embeds || [])
@@ -126,12 +134,20 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   const channelId = msg.channel.id;
 
   // Build messages array: history + current message
+  // Images are injected directly into the current message for native vision — not stored in history
   // Interjections are stateless — no history, just butt in
+  const imageNote = imageData ? (imageData.isGif ? '[gif frame attached]' : '[image attached]') : '';
+  const historyContent = imageNote ? `${userMessage} ${imageNote}`.trim() : userMessage;
+
+  const currentUserMsg = imageData
+    ? { role: 'user', content: userMessage || imageNote, images: [imageData.base64] }
+    : { role: 'user', content: userMessage };
+
   const messages = interjecting
     ? [{ role: 'user', content: `[someone just posted this, butt in]\n"${userMessage}"` }]
     : [
         ...getHistory(channelId),
-        { role: 'user', content: userMessage },
+        currentUserMsg,
       ];
 
   // 4% chance to just not be bothered — fires before hitting the model
@@ -186,7 +202,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   // Push to conversation history and increment depth
   if (!interjecting) {
-    pushHistory(channelId, 'user', userMessage);
+    pushHistory(channelId, 'user', historyContent);
     pushHistory(channelId, 'assistant', cleanReply);
     incrementDepth(msg.author.id);
   }
