@@ -140,7 +140,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   const historyContent = imageNote ? `${userMessage} ${imageNote}`.trim() : userMessage;
 
   const currentUserMsg = imageData
-    ? { role: 'user', content: userMessage || imageNote, images: [imageData.base64] }
+    ? { role: 'user', content: userMessage, images: [imageData.base64] }
     : { role: 'user', content: userMessage };
 
   const messages = interjecting

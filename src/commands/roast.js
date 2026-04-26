@@ -29,13 +29,13 @@ export async function execute(interaction) {
   cooldownSet(`roast:${interaction.user.id}`, ROAST_COOLDOWN_MS);
 
   try {
-    const prompt = `deliver a brutal one-liner about ${target.username}. do NOT address them directly — make a declaration about them to the room. one line.`;
+    const prompt = `say one brutal thing to ${target.username}. one sentence.`;
     const raw = await ollamaChat([{ role: 'user', content: prompt }], 0);
-    const shaped = shapeWithSeed(raw, 1800, `${interaction.id}:${target.id}`);
+    const shaped = shapeWithSeed(raw, 300, `${interaction.id}:${target.id}`);
     const stripped = stripExoticUnicode(shaped);
     const clean = stripped.replace(/[^a-zA-Z0-9]/g, '').length < 3 ? 'no.' : stripped;
 
-    await interaction.editReply({ content: `${target} ${safe(replaceBotRefs(clean))}` });
+    await interaction.editReply({ content: `${target} ${safe(replaceBotRefs(clean))}`, allowedMentions: { parse: ['users'] } });
   } catch {
     await interaction.editReply({ content: 'busy. whatever.' });
   }
