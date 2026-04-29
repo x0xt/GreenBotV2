@@ -89,13 +89,14 @@ export async function execute(msg) {
 
     // Ambient interjects only on media, never on other bots (loop prevention)
     let interjecting = false;
-    if (!targeted && !isBot && INTERJECT_ENABLED && isNonTextPayload(msg) && msg.guild && (!MAIN_CHANNEL_ID || msg.channel.id === MAIN_CHANNEL_ID) && canInterject(msg.channel.id) && Math.random() < INTERJECT_PROB) {
+    const isMain = !MAIN_CHANNEL_ID || msg.channel.id === MAIN_CHANNEL_ID;
+    if (!targeted && !isBot && INTERJECT_ENABLED && isNonTextPayload(msg) && msg.guild && canInterject(msg.channel.id) && Math.random() < (isMain ? INTERJECT_PROB : INTERJECT_PROB / 2)) {
       interjecting = true;
       markInterject(msg.channel.id);
     }
 
     // Unprompted summon — tiny chance to butt into any text message
-    if (!targeted && !interjecting && !isBot && msg.guild && raw.length > 0 && (!MAIN_CHANNEL_ID || msg.channel.id === MAIN_CHANNEL_ID) && Math.random() < 0.004) {
+    if (!targeted && !interjecting && !isBot && msg.guild && raw.length > 0 && Math.random() < (isMain ? 0.004 : 0.002)) {
       interjecting = true;
     }
 
