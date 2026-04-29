@@ -1,6 +1,6 @@
 {
   "name": "greenbot-v2",
-  "version": "1.9.1",
+  "version": "2.0.1",
   "description": "A chaotic Discord bot.",
   "main": "src/index.js",
   "type": "module",

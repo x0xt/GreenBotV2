@@ -20,9 +20,10 @@ const lastInterjectAt = new Map();
 const canInterject = (ch) => (Date.now() - (lastInterjectAt.get(ch) ?? 0)) >= INTERJECT_COOLDOWN_MS;
 const markInterject = (ch) => lastInterjectAt.set(ch, Date.now());
 
-const MEDIA_REPLY_PROB = Number(process.env.REPLY_TO_MEDIA_PROB ?? 0.4);
+const MEDIA_REPLY_PROB = Number(process.env.REPLY_TO_MEDIA_PROB ?? 0.2);
 const MEDIA_REPLY_COOLDOWN_MS = Number(process.env.REPLY_TO_MEDIA_COOLDOWN_MS ?? 8000);
 const MEDIA_COOLDOWN_BUCKET = 'media-reply';
+const MAIN_CHANNEL_ID = process.env.MAIN_CHANNEL_ID ?? null;
 
 export const name = Events.MessageCreate;
 export const once = false;
@@ -88,13 +89,13 @@ export async function execute(msg) {
 
     // Ambient interjects only on media, never on other bots (loop prevention)
     let interjecting = false;
-    if (!targeted && !isBot && INTERJECT_ENABLED && isNonTextPayload(msg) && msg.guild && canInterject(msg.channel.id) && Math.random() < INTERJECT_PROB) {
+    if (!targeted && !isBot && INTERJECT_ENABLED && isNonTextPayload(msg) && msg.guild && (!MAIN_CHANNEL_ID || msg.channel.id === MAIN_CHANNEL_ID) && canInterject(msg.channel.id) && Math.random() < INTERJECT_PROB) {
       interjecting = true;
       markInterject(msg.channel.id);
     }
 
     // Unprompted summon — tiny chance to butt into any text message
-    if (!targeted && !interjecting && !isBot && msg.guild && raw.length > 0 && Math.random() < 0.01) {
+    if (!targeted && !interjecting && !isBot && msg.guild && raw.length > 0 && (!MAIN_CHANNEL_ID || msg.channel.id === MAIN_CHANNEL_ID) && Math.random() < 0.004) {
       interjecting = true;
     }
 

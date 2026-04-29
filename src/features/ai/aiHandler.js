@@ -144,7 +144,7 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     : { role: 'user', content: userMessage };
 
   const messages = interjecting
-    ? [{ role: 'user', content: `[someone just posted this, butt in]\n"${userMessage}"` }]
+    ? [{ role: 'user', content: `[you're lurking. someone just posted this in the server. if you have something sharp and specifically funny about this exact post, say it in one line. make it contextual, not random.]\n"${userMessage}"` }]
     : [
         ...getHistory(channelId),
         currentUserMsg,
