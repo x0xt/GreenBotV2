@@ -125,25 +125,16 @@ GORE: yes|no`;
 
 function parseMoondreamResponse(raw) {
   const goreLine = raw.match(/GORE:\s*(yes|no)/i);
-  // Parse failure → conservative block (fail-safe)
-  if (!goreLine) {
-    console.warn('[filter] moondream2 response unparseable, blocking conservatively:', raw.slice(0, 100));
-    return { parseOk: false, gore: true };
-  }
+  if (!goreLine) return { parseOk: false, gore: true };
   return {
     parseOk: true,
     gore: goreLine[1].toLowerCase() === 'yes',
   };
 }
 
-async function classifyWithMoondream(buffer) {
-  const resized = await prepareImageForMoondream(buffer);
-  const base64  = resized.toString('base64');
-
+async function callMoondreamOnce(base64) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FILTER_MOONDREAM_TIMEOUT_MS);
-
-  let raw = '';
   try {
     const res = await fetch(`${OLLAMA_HOST}/api/chat`, {
       method:  'POST',
@@ -157,12 +148,28 @@ async function classifyWithMoondream(buffer) {
       }),
     });
     const json = await res.json();
-    raw = json?.message?.content ?? '';
+    return json?.message?.content ?? '';
   } finally {
     clearTimeout(timer);
   }
+}
 
-  return { ...parseMoondreamResponse(raw), raw };
+async function classifyWithMoondream(buffer) {
+  const resized = await prepareImageForMoondream(buffer);
+  const base64  = resized.toString('base64');
+
+  // Try up to 2 times before accepting a parse failure.
+  // moondream2 occasionally ignores the format on the first attempt.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const raw    = await callMoondreamOnce(base64);
+    const result = parseMoondreamResponse(raw);
+    if (result.parseOk) return result;
+    console.warn(`[filter] moondream2 parse failed (attempt ${attempt}/2):`, raw.slice(0, 100));
+  }
+
+  // Both attempts unparseable — conservative block
+  console.warn('[filter] moondream2 failed to parse after 2 attempts, blocking conservatively');
+  return { parseOk: false, gore: true };
 }
 
 // ---------------------------------------------------------------------------
