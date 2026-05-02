@@ -13,6 +13,7 @@ A Discord bot that is specifically designed to not help you. It makes confident 
 - Makes short, chaotic, confidently wrong declarations — visually distorted with random ALL CAPS, sPOnGeCaSe, or lowercase
 - Deflects bot/AI references with randomized identity claims
 - Blocks prompt injection attempts before they reach the model
+- Passively collects and re-posts images from the server
 
 ### Slash Commands
 | Command | Description |
@@ -24,12 +25,30 @@ A Discord bot that is specifically designed to not help you. It makes confident 
 
 ---
 
+## Content Filter
+
+All images the bot considers caching pass through a two-layer filter before being saved.
+
+**Layer 1 — save-time:**
+1. MD5 hash checked against a local blocklist (instant — catches repeat content)
+2. [nsfwjs](https://github.com/infinitered/nsfwjs) classifies the image locally (CPU, ~100–200ms). Porn, hentai, and explicit content are blocked outright.
+3. Anything not clearly safe is passed to moondream2 (via Ollama) which checks for gore and graphic violence.
+
+**Layer 2 — post-time:** Every image is hash-checked before being posted. Anything added to the blocklist after caching is silently deleted from the pool.
+
+Blocked images are never saved. A ping with the filename, MD5, source URL, and classifier output is sent to a configured report channel. Everything is logged to `data/filter.db`.
+
+The filter includes a stub integration point for [Thorn Safer](https://www.thorn.org/safer/) / PhotoDNA hash matching — replaceable with a real API call when access is approved.
+
+---
+
 ## Stack
 
-- **Runtime:** Node.js (ESM)
+- **Runtime:** Node.js 18+ (ESM)
 - **Discord:** discord.js v14
-- **AI:** [Ollama](https://ollama.com) running `dolphin3:8b` locally (Dolphin 3.0 on Llama 3.1 8B — uncensored)
-- **DB:** better-sqlite3 (for todos)
+- **AI (chat):** [Ollama](https://ollama.com) running `dolphin3:8b` locally (Dolphin 3.0 on Llama 3.1 8B — uncensored)
+- **AI (vision/filter):** [Ollama](https://ollama.com) running `moondream2` for gore detection; [nsfwjs](https://github.com/infinitered/nsfwjs) + TensorFlow.js (CPU) for porn detection
+- **DB:** better-sqlite3 (todos, filter log, hash blocklist)
 
 ---
 
@@ -37,7 +56,7 @@ A Discord bot that is specifically designed to not help you. It makes confident 
 
 - Node.js 18+
 - [Ollama](https://ollama.com) installed and running
-- A GPU with enough VRAM to run the model (6GB+ recommended for `dolphin3:8b`)
+- A GPU with enough VRAM to run the models (6GB+ recommended for `dolphin3:8b`; `moondream2` runs on CPU)
 - A Discord bot token with the following intents: `Guilds`, `GuildMessages`, `MessageContent`, `GuildMessageReactions`, `DirectMessages`
 
 ---
@@ -55,10 +74,11 @@ cd GreenBotV2
 npm install
 ```
 
-**3. Pull the base model and build the greenbot persona**
+**3. Pull the models**
 ```bash
 ollama pull dolphin3:8b
 ollama create greenbot -f LLM/modelfile/Modelfile7
+ollama pull moondream2
 ```
 
 **4. Create your `.env` file**
@@ -71,6 +91,7 @@ TODO_CHANNEL_ID=channel_id
 TODO_COMPLETED_CHANNEL_ID=channel_id
 OLLAMA_HOST=http://127.0.0.1:11434
 MODEL=greenbot
+FILTER_REPORT_CHANNEL=channel_id_for_filter_alerts
 ```
 
 **5. Register slash commands**
@@ -107,7 +128,7 @@ WantedBy=multi-user.target
 
 ## Privacy
 
-No user data is stored. The bot does not maintain memory of past conversations. Chat logs are written locally to `logs/` for server owner review only.
+No conversation data is stored between sessions. Chat logs are written locally to `logs/` for server owner review only. The content filter writes blocked image hashes and source URLs to `data/filter.db` — this file is local only and never transmitted.
 
 ---
 

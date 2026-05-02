@@ -130,17 +130,17 @@ export const SELF_DISCLOSURE_PROB = Number(SELF_DISCLOSURE_PROB_RAW || "0");
 export const HUMANIZE_HEDGES = ["tbh,", "ngl,", "low-key", "kinda", "honestly", "fwiw,"];
 export const MYSTIQUE_STRICT = toBool(MYSTIQUE_STRICT_RAW, true);
 export const MYSTIQUE_EVASIVE_LINES = [
-  "who’s asking?",
-  "define ‘bot’.",
-  "i’m here. that’s what matters.",
-  "touch grass first, then we’ll talk.",
+  "who's asking?",
+  "define 'bot'.",
+  "i'm here. that's what matters.",
+  "touch grass first, then we'll talk.",
   "i plead the fifth.",
-  "don’t ruin the vibe.",
+  "don't ruin the vibe.",
   "if i say yes, will you behave?"
 ];
 
 // --- Content Filter ---
-export const FILTER_DB_PATH                  = path.join(DATA_DIR, ‘filter.db’);
+export const FILTER_DB_PATH                  = path.join(DATA_DIR, 'filter.db');
 export const FILTER_NSFWJS_FAST_PASS_NEUTRAL = 0.90;
 export const FILTER_NSFWJS_BLOCK_PORN        = 0.40;
 export const FILTER_NSFWJS_BLOCK_SEXY        = 0.70;
