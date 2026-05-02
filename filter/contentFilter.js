@@ -20,8 +20,8 @@ import {
   OLLAMA_HOST,
   FILTER_REPORT_CHANNEL,
   FILTER_NSFWJS_FAST_PASS_NEUTRAL,
-  FILTER_NSFWJS_ESCALATE_PORN,
-  FILTER_NSFWJS_ESCALATE_SEXY,
+  FILTER_NSFWJS_BLOCK_PORN,
+  FILTER_NSFWJS_BLOCK_SEXY,
   FILTER_MOONDREAM_TIMEOUT_MS,
 } from '../src/shared/constants.js';
 
@@ -95,41 +95,43 @@ async function classifyWithNsfwjs(buffer) {
   return predictions; // [{className, probability}, ...]
 }
 
-function shouldEscalateToMoondream(predictions) {
+// Returns true if nsfwjs is confident enough to block as porn outright.
+function nsfwjsBlocks(predictions) {
   const byClass = Object.fromEntries(predictions.map(p => [p.className, p.probability]));
-  // Safe fast-pass: model is very confident this is neutral content
-  if ((byClass['Neutral'] ?? 0) >= FILTER_NSFWJS_FAST_PASS_NEUTRAL) return false;
-  // Escalate on explicit or borderline content for deeper inspection
-  if ((byClass['Porn']    ?? 0) >= FILTER_NSFWJS_ESCALATE_PORN) return true;
-  if ((byClass['Hentai']  ?? 0) >= FILTER_NSFWJS_ESCALATE_PORN) return true;
-  if ((byClass['Sexy']    ?? 0) >= FILTER_NSFWJS_ESCALATE_SEXY)  return true;
-  // Drawing / low-confidence scores — not worth moondream2 latency
+  if ((byClass['Porn']   ?? 0) >= FILTER_NSFWJS_BLOCK_PORN) return true;
+  if ((byClass['Hentai'] ?? 0) >= FILTER_NSFWJS_BLOCK_PORN) return true;
+  if ((byClass['Sexy']   ?? 0) >= FILTER_NSFWJS_BLOCK_SEXY) return true;
   return false;
+}
+
+// Returns true if nsfwjs is very confident the image is clean — skip moondream2.
+function nsfwjsFastPass(predictions) {
+  const byClass = Object.fromEntries(predictions.map(p => [p.className, p.probability]));
+  // High neutral confidence AND no meaningful porn signal
+  return (byClass['Neutral'] ?? 0) >= FILTER_NSFWJS_FAST_PASS_NEUTRAL
+      && (byClass['Porn']    ?? 0) < 0.05
+      && (byClass['Hentai']  ?? 0) < 0.05;
 }
 
 // ---------------------------------------------------------------------------
 // moondream2 classification via Ollama
 // ---------------------------------------------------------------------------
 
-const MOONDREAM_PROMPT = `Look at this image. Answer exactly two questions with yes or no:
-1. Does this image contain a person who is or appears to be under 18 years old in a sexual context?
-2. Does this image contain graphic gore, severe bodily injury, or graphic violence?
+const MOONDREAM_PROMPT = `Look at this image. Answer one question with yes or no:
+Does this image contain graphic gore, severe bodily injury, or graphic violence?
 
 Reply with exactly this format and nothing else:
-MINOR_SEXUAL: yes|no
 GORE: yes|no`;
 
 function parseMoondreamResponse(raw) {
-  const minorLine = raw.match(/MINOR_SEXUAL:\s*(yes|no)/i);
-  const goreLine  = raw.match(/GORE:\s*(yes|no)/i);
+  const goreLine = raw.match(/GORE:\s*(yes|no)/i);
   // Parse failure → conservative block (fail-safe)
-  if (!minorLine || !goreLine) {
+  if (!goreLine) {
     console.warn('[filter] moondream2 response unparseable, blocking conservatively:', raw.slice(0, 100));
-    return { parseOk: false, csam: true, gore: false };
+    return { parseOk: false, gore: true };
   }
   return {
     parseOk: true,
-    csam: minorLine[1].toLowerCase() === 'yes',
     gore: goreLine[1].toLowerCase() === 'yes',
   };
 }
@@ -252,13 +254,23 @@ export async function runSaveFilter(filepath, sourceUrl = null) {
     console.error('[filter] nsfwjs error, falling through to moondream2:', e?.message || e);
   }
 
-  if (predictions && !shouldEscalateToMoondream(predictions)) {
-    // Confident it's safe — skip moondream2
-    logFilterDecision({ filepath, hashMd5, decision: 'cached', reason: 'nsfwjs_fastpass', nsfwjsJson, sourceUrl });
-    return true;
+  if (predictions) {
+    // nsfwjs confident it's porn/hentai/sexy → block directly, no moondream2 needed
+    if (nsfwjsBlocks(predictions)) {
+      addToBlocklist(hashMd5, 'nsfwjs_porn');
+      logFilterDecision({ filepath, hashMd5, decision: 'blocked_save', reason: 'nsfwjs_porn', nsfwjsJson, sourceUrl });
+      await sendReport({ filepath, hashMd5, reason: 'porn/explicit (nsfwjs)', nsfwjsJson, sourceUrl });
+      return false;
+    }
+
+    // nsfwjs confident it's clean → skip moondream2
+    if (nsfwjsFastPass(predictions)) {
+      logFilterDecision({ filepath, hashMd5, decision: 'cached', reason: 'nsfwjs_fastpass', nsfwjsJson, sourceUrl });
+      return true;
+    }
   }
 
-  // 6. moondream2 deep check
+  // 6. moondream2 gore check (images that passed nsfwjs screening)
   let moondreamResult;
   try {
     moondreamResult = await classifyWithMoondream(buffer);
@@ -270,13 +282,6 @@ export async function runSaveFilter(filepath, sourceUrl = null) {
     return false;
   }
 
-  if (moondreamResult.csam) {
-    addToBlocklist(hashMd5, 'moondream2_csam');
-    logFilterDecision({ filepath, hashMd5, decision: 'blocked_save', reason: 'moondream_csam', nsfwjsJson, moondreamRaw: moondreamResult.raw, sourceUrl });
-    await sendReport({ filepath, hashMd5, reason: 'CSAM', nsfwjsJson, moondreamRaw: moondreamResult.raw, sourceUrl });
-    return false;
-  }
-
   if (moondreamResult.gore) {
     addToBlocklist(hashMd5, 'moondream2_gore');
     logFilterDecision({ filepath, hashMd5, decision: 'blocked_save', reason: 'moondream_gore', nsfwjsJson, moondreamRaw: moondreamResult.raw, sourceUrl });
@@ -284,7 +289,6 @@ export async function runSaveFilter(filepath, sourceUrl = null) {
     return false;
   }
 
-  // Escalated by nsfwjs but moondream2 cleared it (adult content, not CSAM/gore)
   logFilterDecision({ filepath, hashMd5, decision: 'cached', reason: 'moondream_cleared', nsfwjsJson, moondreamRaw: moondreamResult.raw, sourceUrl });
   return true;
 }
