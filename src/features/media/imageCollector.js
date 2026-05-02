@@ -1,5 +1,6 @@
 // file: src/features/media/imageCollector.js
 import { createWriteStream } from 'fs';
+import { unlink } from 'fs/promises';
 import path from 'path';
 import { pipeline } from 'stream/promises';
 import crypto from 'crypto';
@@ -13,6 +14,7 @@ import {
 import { fetchWithTimeout } from '../../shared/network.js';
 import { ensureDir } from '../user/userMemory.js';
 import { prunePool } from './imagePool.js';
+import { runSaveFilter } from '../../../filter/contentFilter.js';
 
 // ---------- helpers ----------
 
@@ -162,6 +164,18 @@ async function saveImageFromUrl(inputUrl) {
 
     await pipeline(response.body, createWriteStream(filepath));
     console.log(`IMAGE: saved ${resolved} → ${filename}`);
+
+    // Content filter — Layer 1 (save-time)
+    const filterPassed = await runSaveFilter(filepath, resolved).catch(e => {
+      console.error('[filter] runSaveFilter threw unexpectedly:', e?.message || e);
+      return true; // unexpected filter crash → allow, don't silently drop legit images
+    });
+    if (!filterPassed) {
+      await unlink(filepath).catch(() => {});
+      console.log(`IMAGE: blocked and deleted ${filename}`);
+      return false;
+    }
+
     await prunePool();
     return true;
   } catch (e) {

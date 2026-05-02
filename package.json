@@ -9,10 +9,12 @@
     "deploy": "node deploy-commands.js"
   },
   "dependencies": {
+    "@tensorflow/tfjs-node": "^4.22.0",
     "axios": "^1.11.0",
     "better-sqlite3": "^12.2.0",
     "discord.js": "^14.15.2",
     "dotenv": "^16.4.5",
+    "nsfwjs": "^4.3.0",
     "sharp": "^0.34.5",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"

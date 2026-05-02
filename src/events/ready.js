@@ -2,6 +2,7 @@ import { Events } from 'discord.js';
 import { ensureDir } from '../features/user/userMemory.js';
 import { IMAGE_POOL_ROOT, OLLAMA_HOST, MODEL } from '../shared/constants.js';
 import { fetchWithTimeout } from '../shared/network.js';
+import { setClient } from '../../filter/filterClient.js';
 
 let botStartTime = Date.now();
 export function getBotStartTime() { return botStartTime; }
@@ -11,6 +12,7 @@ export const once = true;
 
 export async function execute(client) {
   botStartTime = Date.now();
+  setClient(client);
   await ensureDir(IMAGE_POOL_ROOT);
 
   try {

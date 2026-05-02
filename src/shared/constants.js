@@ -137,3 +137,12 @@ export const MYSTIQUE_EVASIVE_LINES = [
   "don’t ruin the vibe.",
   "if i say yes, will you behave?"
 ];
+
+// --- Content Filter ---
+export const FILTER_DB_PATH                  = path.join(DATA_DIR, ‘filter.db’);
+export const FILTER_REPORT_CHANNEL           = ‘1499979576296865862’;
+export const FILTER_NSFWJS_FAST_PASS_NEUTRAL = 0.85;
+export const FILTER_NSFWJS_ESCALATE_PORN     = 0.40;
+export const FILTER_NSFWJS_ESCALATE_SEXY     = 0.70;
+export const FILTER_MOONDREAM_TIMEOUT_MS     = 30_000;
+export const FILTER_HASH_RETRY_MAX           = 10;

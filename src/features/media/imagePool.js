@@ -1,7 +1,10 @@
 import { promises as fs } from 'fs';
+import { readFile, unlink } from 'fs/promises';
+import { createHash } from 'crypto';
 import path from 'path';
-import { IMAGE_POOL_ROOT, IMAGE_POOL_MAX_FILES } from '../../shared/constants.js';
+import { IMAGE_POOL_ROOT, IMAGE_POOL_MAX_FILES, FILTER_HASH_RETRY_MAX } from '../../shared/constants.js';
 import { ensureDir } from '../user/userMemory.js'; // We can reuse this helper
+import { isHashBlocked, logFilterDecision } from '../../../filter/filterDb.js';
 
 export async function getPoolFiles() {
   try {
@@ -15,8 +18,29 @@ export async function getPoolFiles() {
 export async function getRandomImage() {
   const files = await getPoolFiles();
   if (files.length === 0) return null;
-  const randomFile = files[Math.floor(Math.random() * files.length)];
-  return path.join(IMAGE_POOL_ROOT, randomFile);
+
+  // Shuffle once, walk linearly — avoids re-picking the same blocked file
+  const shuffled = [...files].sort(() => Math.random() - 0.5);
+  const limit    = Math.min(shuffled.length, FILTER_HASH_RETRY_MAX);
+
+  for (let i = 0; i < limit; i++) {
+    const filepath = path.join(IMAGE_POOL_ROOT, shuffled[i]);
+    try {
+      const buf    = await readFile(filepath);
+      const md5    = createHash('md5').update(buf).digest('hex');
+      if (isHashBlocked(md5)) {
+        await unlink(filepath).catch(() => {});
+        logFilterDecision({ filepath, hashMd5: md5, decision: 'blocked_post', reason: 'hash_blocklist' });
+        console.log(`[filter] post-time hash block: deleted ${shuffled[i]}`);
+        continue;
+      }
+      return filepath;
+    } catch {
+      continue; // file disappeared (race with prunePool) — try next
+    }
+  }
+
+  return null; // all candidates were blocked or unreadable
 }
 
 export async function prunePool() {
