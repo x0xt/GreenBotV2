@@ -258,45 +258,23 @@ export async function runSaveFilter(filepath, sourceUrl = null) {
     predictions = await classifyWithNsfwjs(buffer);
     nsfwjsJson  = JSON.stringify(predictions);
   } catch (e) {
-    console.error('[filter] nsfwjs error, falling through to moondream2:', e?.message || e);
+    console.error('[filter] nsfwjs error, allowing:', e?.message || e);
   }
 
   if (predictions) {
-    // nsfwjs confident it's porn/hentai/sexy → block directly, no moondream2 needed
+    // nsfwjs confident it's porn/hentai/sexy → block
     if (nsfwjsBlocks(predictions)) {
       addToBlocklist(hashMd5, 'nsfwjs_porn');
       logFilterDecision({ filepath, hashMd5, decision: 'blocked_save', reason: 'nsfwjs_porn', nsfwjsJson, sourceUrl });
       await sendReport({ filepath, hashMd5, reason: 'porn/explicit (nsfwjs)', nsfwjsJson, sourceUrl });
       return false;
     }
-
-    // nsfwjs confident it's clean → skip moondream2
-    if (nsfwjsFastPass(predictions)) {
-      logFilterDecision({ filepath, hashMd5, decision: 'cached', reason: 'nsfwjs_fastpass', nsfwjsJson, sourceUrl });
-      return true;
-    }
   }
 
-  // 6. moondream2 gore check (images that passed nsfwjs screening)
-  let moondreamResult;
-  try {
-    moondreamResult = await classifyWithMoondream(buffer);
-  } catch (e) {
-    // Timeout, Ollama down, etc. — block conservatively
-    console.error('[filter] moondream2 error, blocking conservatively:', e?.message || e);
-    logFilterDecision({ filepath, hashMd5, decision: 'blocked_save', reason: 'moondream_error', nsfwjsJson, sourceUrl });
-    await sendReport({ filepath, hashMd5, reason: 'moondream2 unavailable (conservative block)', nsfwjsJson, sourceUrl });
-    return false;
-  }
-
-  if (moondreamResult.gore) {
-    addToBlocklist(hashMd5, 'moondream2_gore');
-    logFilterDecision({ filepath, hashMd5, decision: 'blocked_save', reason: 'moondream_gore', nsfwjsJson, moondreamRaw: moondreamResult.raw, sourceUrl });
-    await sendReport({ filepath, hashMd5, reason: 'gore', nsfwjsJson, moondreamRaw: moondreamResult.raw, sourceUrl });
-    return false;
-  }
-
-  logFilterDecision({ filepath, hashMd5, decision: 'cached', reason: 'moondream_cleared', nsfwjsJson, moondreamRaw: moondreamResult.raw, sourceUrl });
+  // nsfwjs passed (or errored) — cache the image
+  // Gore detection via moondream2 disabled: too many false positives in practice.
+  // Re-enable once a reliable local gore classifier is identified.
+  logFilterDecision({ filepath, hashMd5, decision: 'cached', reason: 'nsfwjs_pass', nsfwjsJson, sourceUrl });
   return true;
 }
 
