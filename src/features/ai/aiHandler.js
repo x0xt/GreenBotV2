@@ -26,6 +26,21 @@ export function stripExoticUnicode(text) {
     .trim();
 }
 
+// What a text-less message actually was, phrased as a stage direction the persona can react to.
+function describeNonText(msg, hasImage) {
+  const parts = [];
+  const stickers = [...(msg.stickers?.values?.() ?? [])].map(s => s.name).filter(Boolean);
+  if (stickers.length) parts.push(`sent a sticker: "${stickers.join('", "')}"`);
+  if (hasImage) parts.push('sent an image (look at it)');
+  const files = [...(msg.attachments?.values?.() ?? [])]
+    .filter(a => !(a.contentType || '').startsWith('image/')).map(a => a.name).filter(Boolean);
+  if (files.length) parts.push(`sent a file: ${files.join(', ')}`);
+  const gifs = (msg.embeds || []).filter(e => e.type === 'gifv' || e.type === 'image');
+  if (gifs.length) parts.push(`sent a gif${gifs[0].url ? ` (${String(gifs[0].url).split('/').pop().replace(/[-_]/g, ' ').replace(/\.\w+$/, '').slice(0, 60)})` : ''}`);
+  if (!parts.length) parts.push(msg.reference ? 'replied to you with no words' : 'pinged you and said nothing');
+  return `[${parts.join(', ')}]`;
+}
+
 function randBotSlur() {
   return BOT_REPLACEMENTS[Math.floor(Math.random() * BOT_REPLACEMENTS.length)];
 }
@@ -119,7 +134,9 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
     return;
   }
 
-  const userMessage = base || '(empty message)';
+  // No text? Tell the model what was actually sent — "(empty message)" gave it nothing to react to and
+  // produced generic shouting for about half of all replies (bot-01 logs, 2026-10-08).
+  const userMessage = base || describeNonText(msg, !!imageData);
 
   // Spam rage mode — if channel is in rage, mirror back instead of hitting the model
   const rageWord = checkRage(msg.channel.id, msg.author.id);
