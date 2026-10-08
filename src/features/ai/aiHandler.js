@@ -226,11 +226,16 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   // Occasionally ping a random guild member
   let randomPing = '';
-  if (msg.guild && Math.random() < 0.075) {
-    const members = msg.guild.members.cache.filter(m => !m.user.bot && m.id !== msg.author.id);
-    if (members.size > 0) {
-      const picked = members.at(Math.floor(Math.random() * members.size));
-      if (picked) randomPing = `<@${picked.id}> `;
+  // 2% (was 7.5%), and only someone who has talked in this channel in the last 30 min — drag in people
+  // already in the conversation, never random lurkers (x0xt, 2026-10-08).
+  if (msg.guild && Math.random() < 0.02) {
+    const cutoff = Date.now() - 30 * 60 * 1000;
+    const recent = [...new Set(msg.channel.messages.cache
+      .filter(m => m.createdTimestamp >= cutoff && !m.author.bot && m.author.id !== msg.author.id)
+      .map(m => m.author.id))];
+    if (recent.length > 0) {
+      const picked = recent[Math.floor(Math.random() * recent.length)];
+      randomPing = `<@${picked}> `;
     }
   }
 
