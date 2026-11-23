@@ -210,12 +210,10 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
 
   // Persist memory + log (non-blocking) — skip for bots, privacy policy is human-only
   const guildId = msg.guild?.id ?? null;
-  if (!msg.author.bot) {
-    logChat(guildId, msg.author.id, msg.author.username, userMessage, reply, { channelId: msg.channel.id, type: interjecting ? 'interject' : 'targeted' });
-  }
 
   const stripped = stripExoticUnicode(reply || '');
-  const cleanReply = stripped.replace(/[^a-zA-Z0-9]/g, '').length < 3 ? 'no' : stripped;
+  // Model returned nothing usable (27x in the 2026-10/11 logs) → a dismissal, not always the same "no"
+  const cleanReply = stripped.replace(/[^a-zA-Z0-9]/g, '').length < 3 ? DISMISSALS[Math.floor(Math.random() * DISMISSALS.length)] : stripped;
 
   // Push to conversation history and increment depth
   if (!interjecting) {
@@ -265,7 +263,14 @@ export async function handleAiChat(msg, interjecting, opts = {}) {
   }
 
   // ALWAYS reply something (even if model timed out)
-  await msg.reply(humanize(options)).catch((e) => console.error('reply err:', e?.message || e));
+  const sent = humanize(options);
+  await msg.reply(sent).catch((e) => console.error('reply err:', e?.message || e));
+
+  // Log what actually went out (ping + text + images), not the raw model output — skip bots (human-only policy)
+  if (!msg.author.bot) {
+    const imgs = (options.embeds || []).length ? ` [+${options.embeds.length} image]` : '';
+    logChat(guildId, msg.author.id, msg.author.username, userMessage, `${(sent && sent.content) ?? options.content}${imgs}`, { channelId: msg.channel.id, type: interjecting ? 'interject' : 'targeted' }).catch(() => {});
+  }
 
   // Milestone easter egg — fires as a follow-up after the normal reply
   if (!interjecting && !msg.author.bot) {

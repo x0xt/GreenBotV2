@@ -19,6 +19,11 @@ import { MYSTIQUE_EVASIVE_LINES } from '../shared/constants.js';
 const lastInterjectAt = new Map();
 const canInterject = (ch) => (Date.now() - (lastInterjectAt.get(ch) ?? 0)) >= INTERJECT_COOLDOWN_MS;
 const markInterject = (ch) => lastInterjectAt.set(ch, Date.now());
+// The 2% text summon had no cooldown: 566 of 645 unprompted replies came from it, 140 of them within
+// 5 min of the previous one in the same channel (log review 2026-11-23). Same idea as the media cooldown.
+const SUMMON_COOLDOWN_MS = Number(process.env.SUMMON_COOLDOWN_MS ?? 20 * 60 * 1000);
+const lastSummonAt = new Map();
+const canSummon = (ch) => (Date.now() - (lastSummonAt.get(ch) ?? 0)) >= SUMMON_COOLDOWN_MS;
 
 const MEDIA_REPLY_PROB = Number(process.env.REPLY_TO_MEDIA_PROB ?? 0.05);
 const MEDIA_REPLY_COOLDOWN_MS = Number(process.env.REPLY_TO_MEDIA_COOLDOWN_MS ?? 8000);
@@ -67,7 +72,10 @@ export async function execute(msg) {
     const targeted = inDM || mentioned || repliedTo;
 
     // direct reply but not a mention/DM — 10% chance to just ghost them
-    if (repliedTo && !mentioned && !inDM && Math.random() < 0.10) return;
+    if (repliedTo && !mentioned && !inDM && Math.random() < 0.10) {
+      logChat(msg.guild?.id ?? null, msg.author.id, msg.author.username, raw, '(ghosted on purpose)', { channelId: msg.channel.id, type: 'ghost' }).catch(() => {});
+      return;
+    }
 
     // "are you a bot" dodge — only fires when the message is directed at greenbot
     if (targeted) {
@@ -96,8 +104,9 @@ export async function execute(msg) {
     }
 
     // Unprompted summon — tiny chance to butt into any text message
-    if (!targeted && !interjecting && !isBot && msg.guild && raw.length > 0 && Math.random() < (isMain ? 0.02 : 0.01)) {
+    if (!targeted && !interjecting && !isBot && msg.guild && raw.length > 0 && canSummon(msg.channel.id) && Math.random() < (isMain ? 0.02 : 0.01)) {
       interjecting = true;
+      lastSummonAt.set(msg.channel.id, Date.now());
     }
 
     if (targeted || interjecting) {
@@ -116,6 +125,7 @@ export async function execute(msg) {
         if (imgPath) imageUrls = [imgPath];
 
         if (imageUrls?.length) {
+          logChat(msg.guild?.id ?? null, msg.author.id, msg.author.username, raw || '[media]', `[image post: ${imageUrls.slice(0, 3).map(u => String(u).split('/').pop()).join(', ')}]`, { channelId: msg.channel.id, type: 'media-image' }).catch(() => {});
           for (const u of imageUrls.slice(0, 3)) {
             try {
               if (typeof u === 'string' && u.startsWith('http')) {
