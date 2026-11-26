@@ -139,7 +139,7 @@ async function saveImageFromUrl(inputUrl) {
 
     if (Number.isFinite(contentLength) && contentLength > IMAGE_MAX_SIZE_BYTES) {
       console.log(`Skipping large media (${(contentLength / 1048576).toFixed(2)} MB): ${resolved}`);
-      response.body?.destroy();
+      await response.body?.cancel().catch(() => {});
       return false;
     }
 
@@ -153,7 +153,7 @@ async function saveImageFromUrl(inputUrl) {
     }
 
     if (!ext || !IMAGE_ALLOWED_EXTENSIONS.includes(ext)) {
-      response.body?.destroy();
+      await response.body?.cancel().catch(() => {});
       return false;
     }
 
