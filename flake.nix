@@ -20,17 +20,17 @@
         hash = "sha256-f1ENJUbj214QsdEZRjaJAD1YeEKJKtPJW8pRz4KCAXM=";
       };
 
-      greenbot = pkgs.buildNpmPackage {
-        pname = "greenbot";
-        version = (lib.importJSON ./package.json).version;
-        inherit nodejs;
+      version = (lib.importJSON ./package.json).version;
 
+      # Split in two so a code change ships a few hundred KB, not ~800 MB:
+      #  - greenbot-deps: node_modules only (rebuilt only when package-lock.json changes)
+      #  - greenbot: the bot's own files + a symlink to the deps
+      greenbot-deps = pkgs.buildNpmPackage {
+        pname = "greenbot-deps";
+        inherit version nodejs;
         src = lib.fileset.toSource {
           root = ./.;
-          fileset = lib.fileset.unions [
-            ./package.json ./package-lock.json ./deploy-commands.js
-            ./src ./filter ./data ./memory ./medias/lobotomy.gif
-          ];
+          fileset = lib.fileset.unions [ ./package.json ./package-lock.json ];
         };
         npmDepsHash = "sha256-t8RESLX0XDbRPAoK6UbWaZSYYq+/cA0pJN1akg7HKWI=";
         dontNpmBuild = true;     # no build step — plain ESM
@@ -48,13 +48,31 @@
           tar xzf ${libtensorflow} -C $tfdir
           npm rebuild --offline
           rm -rf node_modules/@img/*linuxmusl*   # musl builds of sharp; unused on glibc and unpatchable
+          rm -rf $tfdir/include                  # C headers, only needed to compile the binding
         '';
 
         installPhase = ''
           runHook preInstall
+          mkdir -p $out && cp -r node_modules $out/
+          runHook postInstall
+        '';
+      };
+
+      greenbot = pkgs.stdenvNoCC.mkDerivation {
+        pname = "greenbot";
+        inherit version;
+        src = lib.fileset.toSource {
+          root = ./.;
+          fileset = lib.fileset.unions [
+            ./package.json ./deploy-commands.js ./src ./filter ./data ./memory ./medias/lobotomy.gif
+          ];
+        };
+        installPhase = ''
+          runHook preInstall
           app=$out/lib/greenbot
           mkdir -p $app $out/bin
-          cp -r package.json deploy-commands.js src filter node_modules $app/
+          cp -r package.json deploy-commands.js src filter $app/
+          ln -s ${greenbot-deps}/node_modules $app/node_modules
           mkdir -p $app/seed
           cp -r data $app/seed/data
           cp -r memory $app/seed/memory
@@ -75,10 +93,9 @@
           chmod +x $out/bin/greenbot
           runHook postInstall
         '';
-
         meta.mainProgram = "greenbot";
       };
     in {
-      packages.${system} = { inherit greenbot; default = greenbot; };
+      packages.${system} = { inherit greenbot greenbot-deps; default = greenbot; };
     };
 }
